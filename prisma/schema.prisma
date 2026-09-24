@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agricultora {
+  id           Int         @id @default(autoincrement())
+  nome         String
+  contato      String      @unique
+  senhaHash    String
+  comunidadeId Int
+  comunidade   Comunidade  @relation(fields: [comunidadeId], references: [id])
+  plantios     Plantio[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Coordenadora {
+  id           Int         @id @default(autoincrement())
+  nome         String
+  contato      String      @unique
+  senhaHash    String
+  comunidadeId Int?        @unique
+  comunidade   Comunidade? @relation(fields: [comunidadeId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Comunidade {
+  id           Int          @id @default(autoincrement())
+  nome         String
+  agricultoras Agricultora[]
+  coordenadora Coordenadora?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Plantio {
+  id            Int         @id @default(autoincrement())
+  especie       String
+  dataPlantio   DateTime
+  area          Float
+  tipoCultivo   String
+  agricultoraId Int
+  agricultora   Agricultora @relation(fields: [agricultoraId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([especie])
+  @@index([dataPlantio])
+}
+
+model CalendarioAgricola {
+  id            Int    @id @default(autoincrement())
+  especie       String @unique
+  epocaPlantio  String
+  epocaColheita String
+}

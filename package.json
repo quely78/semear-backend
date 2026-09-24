@@ -1,0 +1,22 @@
+{
+  "name": "semear-backend",
+  "version": "1.0.0",
+  "description": "API back-end do SemeAR com Express, Prisma e PostgreSQL",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcrypt": "latest",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "jsonwebtoken": "latest"
+  },
+  "devDependencies": {
+    "nodemon": "latest",
+    "prisma": "^6.19.0"
+  }
+}
