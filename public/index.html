@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1e5c45" />
+    <title>SemeAR | Gestão do cultivo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="brand-panel">
+        <div class="brand-mark">S</div>
+        <p class="eyebrow">Tecnologia que cultiva futuro</p>
+        <h1>SemeAR</h1>
+        <p class="brand-copy">Organize seus plantios, acompanhe cada ciclo e tome decisões com mais clareza.</p>
+        <div class="field-note"><span>01</span><p>Planeje com o calendário agrícola.</p></div>
+        <div class="field-note"><span>02</span><p>Registre o que nasce na sua terra.</p></div>
+        <div class="field-note"><span>03</span><p>Colha dados para cuidar melhor.</p></div>
+      </section>
+
+      <section class="app-panel">
+        <header class="topbar">
+          <div><p class="eyebrow">Área de cultivo</p><h2 id="greeting">Bem-vinda</h2></div>
+          <button id="logout-button" class="text-button hidden" type="button">Sair</button>
+        </header>
+
+        <div id="auth-view" class="view">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-auth-tab="login" type="button">Entrar</button>
+            <button class="tab" data-auth-tab="register" type="button">Criar conta</button>
+          </div>
+          <form id="login-form" class="form-card">
+            <label>Contato<input name="contato" type="text" placeholder="seu contato" required /></label>
+            <label>Senha<input name="senha" type="password" placeholder="sua senha" required /></label>
+            <button class="primary-button" type="submit">Entrar no SemeAR <span>→</span></button>
+          </form>
+          <form id="register-form" class="form-card hidden">
+            <label>Nome<input name="nome" type="text" placeholder="seu nome" required /></label>
+            <label>Contato<input name="contato" type="text" placeholder="seu contato" required /></label>
+            <label>Senha<input name="senha" type="password" placeholder="crie uma senha" required /></label>
+            <label>Perfil<select name="tipo" required><option value="AGRICULTORA">Agricultora</option><option value="COORDENADORA">Coordenadora</option></select></label>
+            <label>Comunidade ID <small>(obrigatório para agricultora)</small><input name="comunidadeId" type="number" min="1" placeholder="ex.: 1" /></label>
+            <button class="primary-button" type="submit">Criar minha conta <span>→</span></button>
+          </form>
+        </div>
+
+        <div id="dashboard-view" class="view hidden">
+          <div class="dashboard-head"><div><p class="eyebrow">Seu registro</p><h3>Plantios recentes</h3></div><button id="new-planting-button" class="primary-button compact" type="button">+ Novo plantio</button></div>
+          <div id="message" class="message" role="status"></div>
+          <div id="plantings-list" class="plantings-list"><div class="empty-state">Carregando seus plantios...</div></div>
+          <div class="calendar-section"><div><p class="eyebrow">Consulta rápida</p><h3>Calendário agrícola</h3></div><form id="calendar-form" class="inline-form"><input name="especie" type="text" placeholder="Ex.: milho" required /><button class="secondary-button" type="submit">Consultar</button></form><div id="calendar-result" class="calendar-result hidden"></div></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="planting-dialog">
+      <form id="planting-form" method="dialog" class="dialog-form">
+        <button id="close-dialog" class="close-button" type="button" aria-label="Fechar">×</button>
+        <p class="eyebrow">Novo registro</p><h3>Adicionar plantio</h3>
+        <label>Espécie<input name="especie" type="text" placeholder="Ex.: milho" required /></label>
+        <label>Data do plantio<input name="dataPlantio" type="date" required /></label>
+        <label>Área (hectares)<input name="area" type="number" min="0.01" step="0.01" placeholder="0,00" required /></label>
+        <label>Tipo de cultivo<input name="tipoCultivo" type="text" placeholder="Ex.: orgânico" required /></label>
+        <button class="primary-button" type="submit">Salvar plantio <span>→</span></button>
+      </form>
+    </dialog>
+    <script src="/app.js"></script>
+  </body>
+</html>
