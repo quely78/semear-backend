@@ -1,0 +1,15 @@
+# Dependências instaladas pelo npm (são recriadas com "npm install")
+node_modules/
+
+# Pasta gerada pelo "npm run build"
+dist/
+
+# Variáveis de ambiente locais (mantemos só o .env.example no repositório)
+.env
+.env.*
+!.env.example
+
+# Logs e arquivos do sistema/editor
+npm-debug.log*
+.DS_Store
+.vscode/

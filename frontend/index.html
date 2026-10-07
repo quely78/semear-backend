@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- =============================================================
+     index.html — Página única (SPA). O React é montado dentro da
+     <div id="root">. Todas as telas são trocadas pelo React Router.
+     ============================================================= -->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Garante que a tela se ajuste ao celular (uso principal no campo) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Cor da barra do navegador no celular: Verde-Mata da identidade visual -->
+    <meta name="theme-color" content="#355E3B" />
+    <meta name="description" content="SemeAR — o registro do plantio, feito por elas, feito por quem planta." />
+    <!-- Ícone da aba do navegador (ícone do app da identidade visual) -->
+    <link rel="icon" type="image/png" href="/icone.png" />
+    <link rel="apple-touch-icon" href="/icone.png" />
+
+    <!-- Fontes da identidade visual: Baloo 2 (títulos) e Work Sans (corpo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>SemeAR</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Ponto de entrada do JavaScript do React -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
