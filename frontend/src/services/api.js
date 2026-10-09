@@ -4,11 +4,14 @@
 // Todas as chamadas ao back-end passam por aqui. Assim, regras como
 // "enviar o token" e "tratar erros" ficam escritas em um lugar só.
 // =============================================================
-
+import { requisicaoDemo } from './apiDemo';
 // Endereço da API. Vem do arquivo .env (VITE_API_URL).
 // Se não houver .env, usa o endereço padrão do back-end em desenvolvimento.
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Modo demonstração: quando VITE_MODO_DEMO=true no .env, o app usa dados
+// de exemplo (services/apiDemo.js) e funciona SEM o back-end.
+export const MODO_DEMO = import.meta.env.VITE_MODO_DEMO === 'true';
 // Chaves usadas para guardar a sessão no navegador
 const CHAVE_TOKEN = 'semear_token';
 const CHAVE_USUARIO = 'semear_usuario';
@@ -66,6 +69,14 @@ export class ErroApi extends Error {
 export async function requisicao(caminho, opcoes = {}) {
   const { method = 'GET', body } = opcoes;
 
+  // Modo demonstração: responde com dados de exemplo, sem chamar o servidor
+  if (MODO_DEMO) {
+    try {
+      return await requisicaoDemo(caminho, opcoes);
+    } catch (erro) {
+      throw new ErroApi(erro.message, erro.status);
+    }
+  }
   // Cabeçalhos: sempre JSON e, se houver login, o token "Bearer"
   const headers = { 'Content-Type': 'application/json' };
   const token = obterToken();

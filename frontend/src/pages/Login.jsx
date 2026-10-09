@@ -8,6 +8,7 @@ import Aviso from '../components/Aviso';
 import Campo from '../components/Campo';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
+import { MODO_DEMO } from '../services/api';
 import { temErros, validarObrigatorio } from '../utils/validacoes';
 
 export default function Login() {
@@ -74,7 +75,13 @@ export default function Login() {
 
       <form className="cartao formulario" onSubmit={aoEnviar} noValidate>
         <h1 className="titulo">Entrar</h1>
-
+        {/* Dica que só aparece no modo demonstração (sem back-end) */}
+        {MODO_DEMO && (
+          <Aviso tipo="info">
+            Modo demonstração: digite qualquer contato e senha. Para ver a área da coordenadora,
+            use o contato "coordenadora".
+          </Aviso>
+        )}
         <Aviso tipo="sucesso">{mensagemCadastro}</Aviso>
         <Aviso tipo="erro">{erroGeral}</Aviso>
 
