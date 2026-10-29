@@ -1,3 +1,6 @@
+import { cloneElement, useState } from 'react';
+import Icone from './Icone';
+
 // =============================================================
 // components/Campo.jsx — Campo de formulário com rótulo, dica e erro.
 //
@@ -10,6 +13,12 @@
 //   </Campo>
 // =============================================================
 export default function Campo({ id, rotulo, dica, erro, children }) {
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const ehSenha = children?.props?.type === 'password';
+  const campo = ehSenha
+    ? cloneElement(children, { type: mostrarSenha ? 'text' : 'password' })
+    : children;
+
   return (
     <div className={`campo ${erro ? 'campo--erro' : ''}`}>
       {/* htmlFor liga o rótulo ao campo: tocar no texto foca o campo */}
@@ -17,7 +26,22 @@ export default function Campo({ id, rotulo, dica, erro, children }) {
         {rotulo}
       </label>
 
-      {children}
+      {ehSenha ? (
+        <div className="campo__senha">
+          {campo}
+          <button
+            type="button"
+            className="campo__senha-botao"
+            onClick={() => setMostrarSenha((atual) => !atual)}
+            aria-label={mostrarSenha ? 'Ocultar senha' : 'Visualizar senha'}
+            aria-pressed={mostrarSenha}
+          >
+            <Icone nome={mostrarSenha ? 'olho-fechado' : 'olho'} tamanho={22} />
+          </button>
+        </div>
+      ) : (
+        campo
+      )}
 
       {/* Erro tem prioridade sobre a dica. role="alert" faz leitores de tela anunciarem. */}
       {erro ? (

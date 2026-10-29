@@ -59,6 +59,19 @@ const DESENHOS = {
       <path d="M12 7.5v5.5M12 16.2v.3" />
     </>
   ),
+  olho: (
+    <>
+      <path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </>
+  ),
+  'olho-fechado': (
+    <>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 6.9A10.7 10.7 0 0 1 12 6.8c6 0 9.5 5.2 9.5 5.2a17.7 17.7 0 0 1-3.1 3.3" />
+      <path d="M6.7 6.8C3.9 8.3 2.5 12 2.5 12s3.5 5.2 9.5 5.2c1 0 1.9-.2 2.7-.4" />
+    </>
+  ),
 };
 
 export default function Icone({ nome, tamanho = 22, className = '' }) {
