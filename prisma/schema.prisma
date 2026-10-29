@@ -8,15 +8,15 @@ datasource db {
 }
 
 model Agricultora {
-  id           Int         @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   nome         String
-  contato      String      @unique
+  contato      String     @unique
   senhaHash    String
   comunidadeId Int
-  comunidade   Comunidade  @relation(fields: [comunidadeId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  comunidade   Comunidade @relation(fields: [comunidadeId], references: [id])
   plantios     Plantio[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
 }
 
 model Coordenadora {
@@ -25,18 +25,18 @@ model Coordenadora {
   contato      String      @unique
   senhaHash    String
   comunidadeId Int?        @unique
-  comunidade   Comunidade? @relation(fields: [comunidadeId], references: [id])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  comunidade   Comunidade? @relation(fields: [comunidadeId], references: [id])
 }
 
 model Comunidade {
-  id           Int          @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   nome         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   agricultoras Agricultora[]
   coordenadora Coordenadora?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
 }
 
 model Plantio {
@@ -46,9 +46,9 @@ model Plantio {
   area          Float
   tipoCultivo   String
   agricultoraId Int
-  agricultora   Agricultora @relation(fields: [agricultoraId], references: [id], onDelete: Cascade)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  agricultora   Agricultora @relation(fields: [agricultoraId], references: [id], onDelete: Cascade)
 
   @@index([especie])
   @@index([dataPlantio])
