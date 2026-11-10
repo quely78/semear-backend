@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const plantioRoutes = require('./routes/plantioRoutes');
 const calendarioRoutes = require('./routes/calendarioRoutes');
+const comunidadeRoutes = require('./routes/comunidadeRoutes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/plantios', plantioRoutes);
 app.use('/calendario', calendarioRoutes);
+app.use('/', comunidadeRoutes);
 
 app.use((error, req, res, next) => {
   console.error(error);
