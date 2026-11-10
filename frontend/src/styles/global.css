@@ -176,7 +176,8 @@ img {
   transform: translateX(-50%);
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr; /* uma coluna por aba (3 ou 4) */
   width: 100%;
   max-width: var(--largura-app);
   height: calc(var(--altura-menu) + env(safe-area-inset-bottom));
@@ -1117,55 +1118,6 @@ img {
    9. CALENDÁRIO DO PLANTIO
    ------------------------------------------------------------- */
 
-/* Resumo de hoje */
-.cal-hoje {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-}
-
-.cal-hoje__titulo {
-  font-family: var(--fonte-titulo);
-  font-weight: 700;
-  font-size: 20px;
-  color: var(--verde-mata);
-}
-
-.cal-hoje__lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 15px;
-}
-
-.cal-hoje__lista li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.cal-hoje__lista .cal-bolinha {
-  margin-top: 6px;
-}
-
-.cal-hoje__proxima {
-  font-size: 15px;
-  color: var(--tinta-suave);
-}
-
-.cal-hoje__proxima strong {
-  color: var(--tinta);
-}
-
-.cal-hoje__proxima svg {
-  color: var(--cal-chuva);
-  vertical-align: -3px;
-}
-
 /* Navegação ‹ abril 2026 › */
 .cal-navegacao {
   display: grid;
@@ -1336,10 +1288,6 @@ img {
 }
 
 .cal-eventos .cal-bolinha,
-.cal-hoje__lista .cal-bolinha {
-  width: 12px;
-  height: 12px;
-}
 
 .cal-bolinha--plantio { background: var(--cal-plantio); }
 .cal-bolinha--chuva { background: var(--cal-chuva); }
@@ -1418,13 +1366,525 @@ img {
   color: var(--tinta-suave);
 }
 
-.cal-evento__periodo-destaque {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--verde-mata);
-}
 
 .cal-evento__dica {
   font-size: 15px;
+  color: var(--tinta-suave);
+}
+
+/* -------------------------------------------------------------
+   10. ESTOQUE (plantio = entrada, colheita = saída)
+   ------------------------------------------------------------- */
+:root {
+  --est-crescendo: var(--verde-broto);
+  --est-pronto: var(--rosa-ipe);
+  --est-atrasado: var(--rosa-escuro);
+  --est-colhido: var(--verde-mata);
+}
+
+/* Selo de situação (crescendo, pronto, atrasado, colhido) */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selo--crescendo {
+  background: var(--verde-claro);
+  color: var(--verde-mata);
+}
+
+.selo--pronto {
+  background: var(--rosa-claro);
+  color: var(--rosa-texto);
+}
+
+.selo--atrasado {
+  background: var(--est-atrasado);
+  color: #fff;
+}
+
+.selo--colhido {
+  background: var(--est-colhido);
+  color: #fff;
+}
+
+.plantio-card__selo {
+  margin-top: 6px;
+}
+
+/* Cartão de situação + colheita, no calendário do plantio */
+.estoque-plantio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-left: 6px solid var(--est-crescendo);
+}
+
+.estoque-plantio--pronto {
+  border-left-color: var(--est-pronto);
+}
+
+.estoque-plantio--atrasado {
+  border-left-color: var(--est-atrasado);
+}
+
+.estoque-plantio--colhido {
+  border-left-color: var(--est-colhido);
+}
+
+.estoque-plantio__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.estoque-plantio__kg {
+  font-family: var(--fonte-titulo);
+  font-size: 24px;
+  color: var(--verde-mata);
+}
+
+.estoque-plantio__desfazer {
+  align-self: flex-start;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.estoque-plantio__form {
+  gap: 12px;
+}
+
+.estoque-plantio__campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Resumo geral do estoque */
+.estoque-geral {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.estoque-geral__rotulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.estoque-geral__valor {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.1;
+  color: var(--verde-mata);
+}
+
+/* Barra empilhada: quanto do campo está em cada situação */
+.estoque-barra {
+  display: flex;
+  height: 16px;
+  margin: 10px 0 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--trilho);
+}
+
+.estoque-barra__parte {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.estoque-barra__parte--crescendo { background: var(--est-crescendo); }
+.estoque-barra__parte--pronto { background: var(--est-pronto); }
+.estoque-barra__parte--atrasado { background: var(--est-atrasado); }
+
+.estoque-linhas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.estoque-linhas li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: 15px;
+}
+
+.estoque-linhas li:last-child {
+  border-bottom: 0;
+}
+
+.estoque-linhas strong {
+  margin-left: auto;
+  text-align: right;
+}
+
+.estoque-linhas strong span {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.estoque-linhas__saida svg {
+  color: var(--est-colhido);
+}
+
+.estoque-marca {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.estoque-marca--crescendo { background: var(--est-crescendo); }
+.estoque-marca--pronto { background: var(--est-pronto); }
+.estoque-marca--atrasado { background: var(--est-atrasado); }
+
+.estoque-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estoque-secao .subtitulo {
+  margin-bottom: 0;
+}
+
+/* Item de "Pronto para colher" */
+.item-estoque {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-left: 5px solid var(--est-pronto);
+  border-radius: var(--raio);
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+
+.item-estoque__titulo {
+  font-weight: 600;
+}
+
+.item-estoque__detalhe {
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+/* Tabela por espécie */
+.tabela--estoque td {
+  white-space: nowrap;
+}
+
+.tabela__nota {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rosa-texto);
+}
+
+/* Histórico de entradas e saídas */
+.movimentos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.movimento {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.movimento__icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  color: var(--verde-mata);
+}
+
+.movimento--saida .movimento__icone {
+  background: var(--rosa-claro);
+  color: var(--rosa-texto);
+}
+
+.movimento__titulo {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.movimento__detalhe {
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* -------------------------------------------------------------
+   11. COMUNIDADE: alternador e exportar gráfico
+   ------------------------------------------------------------- */
+.alternador {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--raio);
+  background: var(--areia-escura);
+}
+
+.alternador__opcao {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--tinta-suave);
+  cursor: pointer;
+}
+
+.alternador__opcao--ativa {
+  background: var(--papel);
+  color: var(--verde-mata);
+  box-shadow: 0 1px 4px rgba(34, 48, 31, 0.15);
+}
+
+.grafico__exportar {
+  margin-top: 18px;
+}
+
+/* -------------------------------------------------------------
+   12. INÍCIO DA RESPONSÁVEL PELA COMUNIDADE
+   ------------------------------------------------------------- */
+
+/* Faixa verde com o nome da comunidade */
+.painel-responsavel {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 20px 22px;
+  border-radius: 20px;
+  background: var(--verde-mata);
+  color: #fff;
+}
+
+/* Círculo decorativo no canto (feito em CSS, sem imagem extra) */
+.painel-responsavel::after {
+  content: "";
+  position: absolute;
+  right: -30px;
+  bottom: -40px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--verde-broto);
+  opacity: 0.25;
+}
+
+.painel-responsavel__papel {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rosa-claro);
+}
+
+.painel-responsavel__nome {
+  margin-top: 2px;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.painel-responsavel__resumo {
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--verde-claro);
+}
+
+/* Números 2 x 2 */
+.numeros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.numero {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+}
+
+.numero__rotulo {
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.numero__valor {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.15;
+  color: var(--verde-mata);
+}
+
+.numero--destaque {
+  border-color: var(--rosa-ipe);
+  background: var(--rosa-claro);
+}
+
+.numero--destaque .numero__valor {
+  color: var(--rosa-texto);
+}
+
+/* Precisa de atenção */
+.atencao .subtitulo {
+  margin-bottom: 10px;
+}
+
+.atencao__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.atencao__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+.atencao__item:hover {
+  border-color: var(--verde-boiuna);
+}
+
+.atencao__item > span:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.atencao__item > svg {
+  flex-shrink: 0;
+  color: var(--verde-mata);
+}
+
+.atencao__detalhe {
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.atencao__icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--verde-claro);
+  color: var(--verde-mata);
+}
+
+.atencao__icone--colheita {
+  background: var(--rosa-claro);
+  color: var(--rosa-texto);
+}
+
+/* Atalhos em grade */
+.atalhos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.atalho {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 112px;
+  padding: 14px 12px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+.atalho:hover {
+  border-color: var(--verde-mata);
+}
+
+.atalho__icone {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: var(--verde-mata);
+  color: #fff;
+}
+
+.atalho__titulo {
+  font-size: 15px;
+}
+
+.atalho__texto {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--tinta-suave);
+}
+
+/* Cartão de agricultora clicável */
+.agricultora-card--link {
+  grid-template-columns: auto 1fr auto;
+  text-decoration: none;
+  color: var(--tinta);
+  transition: border-color 0.15s;
+}
+
+.agricultora-card--link:hover {
+  border-color: var(--verde-boiuna);
+}
+
+.agricultora-card__avatar--inativa {
+  background: var(--areia-escura);
   color: var(--tinta-suave);
 }
