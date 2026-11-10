@@ -18,11 +18,12 @@ Equipe **vertex**: Alice Quely, João Ribeiro, Karolayne Diniz, Maria Helena e M
 | 03 | Meus plantios (com filtros) | `/plantios` | RF06 |
 | 04 | Cadastrar / editar / excluir plantio | `/plantios/novo` e `/plantios/:id/editar` | RF03, RF04, RF05 |
 | 05 | Calendário agrícola | `/calendario` | RF07 |
-| 05b | Calendário do plantio (etapas + chuva prevista) | `/plantios/:id/calendario` | RF07 |
+| 05b | Calendário do plantio (etapas, chuva prevista, registrar colheita) | `/plantios/:id/calendario` | RF07 |
 | 06 | Dashboard da comunidade | `/comunidade` | RF08, RF09 |
 | 07 | Validação de dados | dentro da tela 04 | RN02, RN03 |
 | 08 | Responsável pela comunidade | `/coordenadora` | perfil de quem cuida da comunidade |
 | 08b | Agricultoras da comunidade | `/coordenadora/agricultoras` | lista para a responsável |
+| 09 | Estoque da comunidade (plantio = entrada, colheita = saída) | `/coordenadora/estoque` | só a responsável |
 
 ---
 
@@ -64,7 +65,7 @@ semear-frontend/
     ├── main.jsx              # ponto de entrada do React
     ├── App.jsx               # mapa de rotas (URL → tela)
     ├── config/
-    │   ├── dados.js          # comunidades, espécies, tipos de cultivo, calendário de referência
+    │   ├── dados.js          # comunidades, espécies, tipos de cultivo, períodos do filtro
     │   └── ciclos.js         # etapas do ciclo de cada espécie + épocas de chuva da região
     ├── context/
     │   └── AuthContext.jsx   # login/logout disponível em todas as telas
@@ -72,13 +73,15 @@ semear-frontend/
     │   ├── api.js            # função central de requisição + token
     │   ├── authService.js
     │   ├── plantioService.js
-    │   ├── calendarioService.js
+    │   ├── comunidadeService.js # comunidades, agricultoras e plantios da comunidade
     │   ├── climaService.js   # previsão de chuva (Open-Meteo) com cache
     │   └── dashboardService.js
     ├── utils/
     │   ├── validacoes.js     # RN02, RN03, contato, senha...
     │   ├── formatadores.js   # datas, m², nomes
-    │   └── datas.js          # contas com datas do calendário (sem problema de fuso)
+    │   ├── datas.js          # contas com datas do calendário (sem problema de fuso)
+    │   ├── estoque.js        # situação de cada plantio e totais do estoque
+    │   └── exportarGrafico.js # gera o PNG do gráfico de espécies
     ├── components/           # peças reutilizáveis
     │   ├── Aviso.jsx         # faixa de erro/sucesso/info
     │   ├── CalendarioMes.jsx # grade de um mês do calendário do plantio
@@ -91,6 +94,7 @@ semear-frontend/
     │   ├── Logo.jsx
     │   ├── MenuInferior.jsx  # Plantios · Calendário · Comunidade
     │   ├── PlantioCard.jsx
+    │   ├── RegistroColheita.jsx # situação + registrar/desfazer colheita
     │   └── RotaProtegida.jsx # bloqueia telas sem login
     ├── pages/                # uma tela por arquivo
     │   ├── Cadastro.jsx      # Tela 01
@@ -102,6 +106,7 @@ semear-frontend/
     │   ├── Dashboard.jsx     # Tela 06
     │   ├── Coordenadora.jsx  # Tela 08
     │   ├── Agricultoras.jsx  # Tela 08b
+    │   ├── Estoque.jsx       # Tela 09 (só a responsável)
     │   └── NaoEncontrada.jsx # página 404
     └── styles/
         └── global.css        # cores e fontes da identidade visual
@@ -143,6 +148,25 @@ Tocar em um plantio (em **Meus plantios** ou na aba **Calendário**) abre o cale
 
 ---
 
+## 📦 Estoque
+
+O estoque é uma ferramenta **só da responsável pela comunidade** (`/coordenadora/estoque`). Os plantios funcionam como um estoque:
+
+- **Entrada** = plantio (área em m² que vai para o campo).
+- **Saída** = colheita. Quem registra é a agricultora, no calendário do plantio (data + quilos); dá para desfazer se foi por engano.
+
+Cada plantio tem uma situação, calculada pelo ciclo da espécie (`src/utils/estoque.js`): **crescendo**, **pronto para colher**, **colheita atrasada** ou **colhido**.
+
+A responsável vê a comunidade inteira, com filtro por agricultora. Tocar em uma agricultora na lista abre o estoque dela.
+
+A tela mostra a área no campo por situação, o que está pronto para colher, os totais por espécie e o histórico de entradas e saídas.
+
+## 🖼️ Exportar gráfico
+
+Na tela **Comunidade**, o botão **Baixar gráfico (imagem)** gera um PNG com o gráfico de espécies, os totais e a data, pronto para mandar pelo WhatsApp. A agricultora pode alternar entre os números da **Comunidade** e os de **Meus plantios** antes de baixar. A imagem é gerada no próprio celular.
+
+---
+
 ## 🔌 Integração com o back-end
 
 Rotas do `semear-backend` usadas pelo front:
@@ -155,7 +179,12 @@ Rotas do `semear-backend` usadas pelo front:
 | POST | `/plantios` | Novo plantio |
 | PUT | `/plantios/:id` | Editar plantio |
 | DELETE | `/plantios/:id` | Excluir plantio |
-| GET | `/calendario/:especie` | Calendário |
+| PUT | `/plantios/:id/colheita` | Registrar colheita (saída do estoque) |
+| DELETE | `/plantios/:id/colheita` | Desfazer colheita |
+| GET | `/comunidades` | Cadastro |
+| GET | `/coordenadora/agricultoras` | Início e Agricultoras (responsável) |
+| GET | `/coordenadora/plantios` | Início e Estoque (responsável) |
+| GET | `/dashboard/comunidade` | Comunidade |
 
 Serviço externo: `GET https://api.open-meteo.com/v1/forecast` (previsão de chuva do calendário do plantio).
 
@@ -163,19 +192,8 @@ Serviço externo: `GET https://api.open-meteo.com/v1/forecast` (previsão de chu
 
 O front já funciona com a API atual, mas estes pontos dependem do back-end:
 
-1. **Comunidades** — criar `GET /comunidades` (lista `[{ id, nome }]`). Enquanto não existir, o cadastro usa a lista fixa de `src/config/dados.js`, cujos IDs **precisam existir no banco**.
-1. **Agricultoras da comunidade** — criar `GET /coordenadora/agricultoras` (login de COORDENADORA), devolvendo `{ comunidade: { id, nome }, agricultoras: [{ id, nome, contato, totalPlantios, areaTotal }] }`. Usada na área da responsável e na lista de agricultoras.
-2. **Painel da comunidade** — o front já chama `GET /dashboard/comunidade`. Enquanto essa rota não existir, a tela mostra os números da própria agricultora. Formato esperado:
-   ```json
-   {
-     "areaTotal": 312,
-     "agricultorasAtivas": 18,
-     "especies": [{ "especie": "Milho", "area": 120, "quantidade": 5 }]
-   }
-   ```
-3. **Calendário completo** — o front consulta espécie por espécie. Ideal: criar `GET /calendario` listando todas. Os nomes das espécies em `src/config/dados.js` devem ser **iguais** aos da tabela `CalendarioAgricola`.
-4. **RN03 (data até 12 meses no futuro)** — validada no front; recomenda-se validar também na API.
-5. **Banco de dados** — os documentos citam MySQL/XAMPP, mas o `schema.prisma` atual usa PostgreSQL. Vale alinhar com a equipe.
+1. **RN03 (data até 12 meses no futuro)** — validada no front; recomenda-se validar também na API.
+2. **Banco de dados** — os documentos citam MySQL/XAMPP, mas o `schema.prisma` atual usa PostgreSQL. Vale alinhar com a equipe.
 
 ---
 
