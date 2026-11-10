@@ -9,5 +9,7 @@ router.post('/', plantioController.criar);
 router.get('/', plantioController.listar);
 router.put('/:id', plantioController.editar);
 router.delete('/:id', plantioController.excluir);
+router.put('/:id/colheita', plantioController.registrarColheita);
+router.delete('/:id/colheita', plantioController.desfazerColheita);
 
 module.exports = router;
