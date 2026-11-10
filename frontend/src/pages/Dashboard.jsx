@@ -30,8 +30,11 @@ export default function Dashboard() {
   const pessoal = painel?.origem === 'pessoal';
 
   return (
-    <Layout cabecalho={{ titulo: 'Comunidade' }}>
-      <h1 className="titulo">{pessoal ? 'Meus números' : 'Nossa comunidade'}</h1>
+    <Layout>
+      <div>
+        {pessoal && <p className="sobretitulo">Meus números</p>}
+        <h1 className="titulo">Comunidade</h1>
+      </div>
 
       {carregando && <Carregando texto="Somando os plantios..." />}
       <Aviso tipo="erro">{erro}</Aviso>
@@ -59,7 +62,7 @@ export default function Dashboard() {
               <strong>{formatarArea(dados.areaTotal)}</strong>
               <span>área total plantada</span>
             </div>
-            <div className="indicador indicador--rosa">
+            <div className="indicador">
               {pessoal ? (
                 <>
                   <strong>{dados.especies.length}</strong>

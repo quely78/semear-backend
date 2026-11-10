@@ -54,7 +54,7 @@ export default function Agricultoras() {
     );
 
   return (
-    <Layout cabecalho={{ titulo: 'Agricultoras', voltarPara: '/coordenadora' }}>
+    <Layout>
       <div>
         {comunidade && <p className="sobretitulo">{comunidade.nome}</p>}
         <h1 className="titulo">Agricultoras</h1>
@@ -79,7 +79,7 @@ export default function Agricultoras() {
         </label>
       </div>
 
-      <Aviso tipo="info">{erro}</Aviso>
+      <Aviso tipo="erro">{erro}</Aviso>
 
       {carregando ? (
         <Carregando texto="Buscando agricultoras..." />

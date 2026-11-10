@@ -7,6 +7,7 @@
 //   03 Meus plantios ....... /plantios
 //   04 Cadastrar plantio ... /plantios/novo  e  /plantios/:id/editar
 //   05 Calendário agrícola . /calendario
+//      └ Calendário de um plantio /plantios/:id/calendario
 //   06 Dashboard comunidade  /comunidade
 //   07 Validação ........... (dentro da tela 04: mensagens de erro/sucesso)
 //   08 Responsável pela comunidade /coordenadora
@@ -19,6 +20,7 @@ import Cadastro from './pages/Cadastro';
 import Login from './pages/Login';
 import MeusPlantios from './pages/MeusPlantios';
 import FormPlantio from './pages/FormPlantio';
+import CalendarioPlantio from './pages/CalendarioPlantio';
 import Calendario from './pages/Calendario';
 import Dashboard from './pages/Dashboard';
 import Coordenadora from './pages/Coordenadora';
@@ -46,6 +48,7 @@ export default function App() {
         <Route path="/plantios" element={<MeusPlantios />} />
         <Route path="/plantios/novo" element={<FormPlantio />} />
         <Route path="/plantios/:id/editar" element={<FormPlantio />} />
+        <Route path="/plantios/:id/calendario" element={<CalendarioPlantio />} />
       </Route>
 
       {/* Telas para qualquer pessoa logada */}

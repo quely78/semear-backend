@@ -12,16 +12,17 @@ import { useAuth } from '../context/AuthContext';
 import Icone from './Icone';
 
 // Abas de cada perfil
+// Cada tela tem SEMPRE o mesmo nome e o mesmo ícone, nos dois perfis.
 const ABAS_AGRICULTORA = [
   { para: '/plantios', icone: 'broto', rotulo: 'Plantios' },
   { para: '/calendario', icone: 'calendario', rotulo: 'Calendário' },
-  { para: '/comunidade', icone: 'comunidade', rotulo: 'Comunidade' },
+  { para: '/comunidade', icone: 'grafico', rotulo: 'Comunidade' },
 ];
 
 const ABAS_RESPONSAVEL = [
-  { para: '/coordenadora', icone: 'broto', rotulo: 'Início', exato: true },
+  { para: '/coordenadora', icone: 'casa', rotulo: 'Início', exato: true },
   { para: '/coordenadora/agricultoras', icone: 'comunidade', rotulo: 'Agricultoras' },
-  { para: '/comunidade', icone: 'calendario', rotulo: 'Painel' },
+  { para: '/comunidade', icone: 'grafico', rotulo: 'Comunidade' },
 ];
 
 export default function MenuInferior() {
@@ -33,6 +34,7 @@ export default function MenuInferior() {
       {abas.map((aba) => (
         // NavLink adiciona a classe "active" na aba da tela atual.
         // "end" faz "Início" (/coordenadora) não ficar ativo em /coordenadora/agricultoras.
+        // A aba "Plantios" continua acesa dentro do calendário de um plantio.
         <NavLink key={aba.para} to={aba.para} end={aba.exato} className="menu-inferior__item">
           <Icone nome={aba.icone} />
           <span>{aba.rotulo}</span>

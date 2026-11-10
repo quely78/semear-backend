@@ -32,6 +32,35 @@ const DESENHOS = {
       <path d="M15 14.3c2.6-.4 4.8 1.2 5.5 4.2" />
     </>
   ),
+  // Casa: aba "Início" da responsável pela comunidade
+  casa: (
+    <>
+      <path d="M4 11l8-6.5 8 6.5" />
+      <path d="M6 9.5V20h12V9.5" />
+      <path d="M10 20v-5h4v5" />
+    </>
+  ),
+  // Gráfico de barras: aba "Comunidade" (painel com os números)
+  grafico: (
+    <>
+      <path d="M4 20h16" />
+      <path d="M7 20v-6M12 20V8M17 20v-9" />
+    </>
+  ),
+  // Nuvem com chuva: períodos de chuva no calendário do plantio
+  chuva: (
+    <>
+      <path d="M7 15a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1 .5 7H7Z" />
+      <path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5" />
+    </>
+  ),
+  lapis: (
+    <>
+      <path d="M4 20l1-4.5L15.5 5a2 2 0 0 1 3 3L8 18.5 4 20Z" />
+      <path d="M13.5 7l3 3" />
+    </>
+  ),
+  avancar: <path d="M9 5l7 7-7 7" />,
   mais: <path d="M12 5v14M5 12h14" />,
   voltar: <path d="M15 5l-7 7 7 7" />,
   sair: (

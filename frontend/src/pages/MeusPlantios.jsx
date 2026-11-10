@@ -33,10 +33,10 @@ export default function MeusPlantios() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Esconde a mensagem de sucesso depois de 4 segundos
+  // Esconde a mensagem de sucesso depois de 7 segundos (tempo para ler com calma)
   useEffect(() => {
     if (!sucesso) return undefined;
-    const timer = setTimeout(() => setSucesso(''), 4000);
+    const timer = setTimeout(() => setSucesso(''), 7000);
     return () => clearTimeout(timer);
   }, [sucesso]);
 
@@ -72,7 +72,7 @@ export default function MeusPlantios() {
   const filtrando = Boolean(periodo || especie);
 
   return (
-    <Layout cabecalho={{ saudacao: true }}>
+    <Layout>
       <div className="linha-titulo">
         <h1 className="titulo">Meus plantios</h1>
         {/* Botão principal da tela: novo plantio */}
@@ -81,22 +81,30 @@ export default function MeusPlantios() {
         </Link>
       </div>
 
-      {/* Filtros (Filtrar por data ▾ / Filtrar por espécie ▾) */}
+      {/* Filtros com rótulo sempre visível: assim fica claro o que está filtrado */}
       <div className="filtros">
         <label className="filtro">
-          <span className="sr-only">Filtrar por data</span>
-          <select value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
+          <span className="filtro__rotulo">Data</span>
+          <select
+            value={periodo}
+            onChange={(e) => setPeriodo(e.target.value)}
+            className={periodo ? 'filtro--ativo' : ''}
+          >
             {PERIODOS.map((p) => (
               <option key={p.valor} value={p.valor}>
-                {p.valor ? p.rotulo : 'Por data'}
+                {p.valor ? p.rotulo : 'Todas'}
               </option>
             ))}
           </select>
         </label>
         <label className="filtro">
-          <span className="sr-only">Filtrar por espécie</span>
-          <select value={especie} onChange={(e) => setEspecie(e.target.value)}>
-            <option value="">Por espécie</option>
+          <span className="filtro__rotulo">Espécie</span>
+          <select
+            value={especie}
+            onChange={(e) => setEspecie(e.target.value)}
+            className={especie ? 'filtro--ativo' : ''}
+          >
+            <option value="">Todas</option>
             {ESPECIES.map((nome) => (
               <option key={nome} value={nome}>
                 {nome}
@@ -105,6 +113,19 @@ export default function MeusPlantios() {
           </select>
         </label>
       </div>
+
+      {filtrando && (
+        <button
+          type="button"
+          className="botao-texto filtros__limpar"
+          onClick={() => {
+            setPeriodo('');
+            setEspecie('');
+          }}
+        >
+          Limpar filtros
+        </button>
+      )}
 
       <Aviso tipo="sucesso">{sucesso}</Aviso>
       <Aviso tipo="erro">{erro}</Aviso>
@@ -128,10 +149,18 @@ export default function MeusPlantios() {
         </div>
       ) : (
         <>
-          <p className="texto-apoio">
-            {plantios.length} {plantios.length === 1 ? 'plantio' : 'plantios'} ·{' '}
-            {formatarArea(areaTotal)} no total
-          </p>
+          <div className="resumo-lista">
+            <p className="resumo-lista__numeros">
+              <strong>{plantios.length}</strong> {plantios.length === 1 ? 'plantio' : 'plantios'} ·{' '}
+              <strong>{formatarArea(areaTotal)}</strong> no total
+            </p>
+            {/* Legenda da barrinha colorida de cada cartão */}
+            <p className="legenda-cultivo" aria-hidden="true">
+              <span className="legenda-cultivo__item legenda-cultivo__item--organico">Orgânico</span>
+              <span className="legenda-cultivo__item">Convencional</span>
+            </p>
+          </div>
+          <p className="texto-apoio">Toque em um plantio para ver o calendário dele.</p>
           <ul className="lista">
             {plantios.map((plantio) => (
               <li key={plantio.id}>

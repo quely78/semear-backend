@@ -41,15 +41,15 @@ export default function Coordenadora() {
   const areaTotal = agricultoras.reduce((soma, a) => soma + (Number(a.areaTotal) || 0), 0);
 
   return (
-    // Cabeçalho com saudação ("Olá, Nome") e botão Sair
-    <Layout cabecalho={{ saudacao: true }}>
+    // Cabeçalho padrão: saudação ("Olá, Nome") e botão Sair
+    <Layout>
       <div>
         <p className="sobretitulo">Responsável pela comunidade</p>
         <h1 className="titulo">{dados?.comunidade?.nome || 'Minha comunidade'}</h1>
       </div>
 
       {carregando && <Carregando texto="Carregando sua comunidade..." />}
-      <Aviso tipo="info">{erro}</Aviso>
+      <Aviso tipo="erro">{erro}</Aviso>
 
       {/* Resumo da comunidade */}
       {dados && (
@@ -58,11 +58,11 @@ export default function Coordenadora() {
             <strong>{agricultoras.length}</strong>
             <span>{agricultoras.length === 1 ? 'agricultora' : 'agricultoras'}</span>
           </div>
-          <div className="indicador indicador--broto">
+          <div className="indicador">
             <strong>{comPlantio}</strong>
             <span>com plantio</span>
           </div>
-          <div className="indicador indicador--rosa">
+          <div className="indicador">
             <strong>{formatarArea(areaTotal)}</strong>
             <span>área total</span>
           </div>
@@ -74,18 +74,8 @@ export default function Coordenadora() {
         <Icone nome="comunidade" tamanho={20} /> Ver agricultoras
       </Link>
       <Link to="/comunidade" className="botao botao--secundario">
-        <Icone nome="broto" tamanho={20} /> Painel da comunidade
+        <Icone nome="grafico" tamanho={20} /> Números da comunidade
       </Link>
-
-      <hr className="divisor" />
-
-      {/* Sugestão para uma versão futura (desativada) */}
-      <div className="acao-futura">
-        <span className="etiqueta">sugestão — fora da v1</span>
-        <button type="button" className="botao botao--secundario" disabled>
-          Exportar relatório
-        </button>
-      </div>
     </Layout>
   );
 }

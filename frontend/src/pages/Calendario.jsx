@@ -7,7 +7,56 @@ import Aviso from '../components/Aviso';
 import Carregando from '../components/Carregando';
 import Campo from '../components/Campo';
 import Layout from '../components/Layout';
+import PlantioCard from '../components/PlantioCard';
+import { useAuth } from '../context/AuthContext';
 import { carregarCalendario, consultarEspecie } from '../services/calendarioService';
+import { listarPlantios } from '../services/plantioService';
+
+/**
+ * Parte de cima da tela (só para a agricultora): escolher um dos
+ * plantios dela para abrir o calendário daquele plantio.
+ */
+function MeusPlantiosNoCalendario() {
+  const [plantios, setPlantios] = useState(null); // null = carregando
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    listarPlantios()
+      .then(setPlantios)
+      .catch((e) => {
+        setErro(e.message);
+        setPlantios([]);
+      });
+  }, []);
+
+  return (
+    <section className="secao-calendario">
+      <h2 className="subtitulo">Calendário dos meus plantios</h2>
+      {plantios === null ? (
+        <Carregando texto="Buscando seus plantios..." />
+      ) : erro ? (
+        <Aviso tipo="erro">{erro}</Aviso>
+      ) : plantios.length === 0 ? (
+        <p className="texto-apoio">
+          Quando você registrar um plantio, o calendário dele aparece aqui.
+        </p>
+      ) : (
+        <>
+          <p className="texto-apoio">
+            Escolha um plantio para ver as etapas e a chuva prevista.
+          </p>
+          <ul className="lista">
+            {plantios.map((plantio) => (
+              <li key={plantio.id}>
+                <PlantioCard plantio={plantio} voltar={{ para: '/calendario', rotulo: 'Calendário' }} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
 
 /** Remove acentos e deixa minúsculo: "Feijão" → "feijao" (busca mais tolerante). */
 function normalizar(texto) {
@@ -15,6 +64,7 @@ function normalizar(texto) {
 }
 
 export default function Calendario() {
+  const { usuario } = useAuth();
   const [linhas, setLinhas] = useState([]);
   const [usouReferencia, setUsouReferencia] = useState(false);
   const [carregando, setCarregando] = useState(true);
@@ -61,8 +111,12 @@ export default function Calendario() {
   const linhasVisiveis = extra && !extra.naoEncontrada ? [extra] : linhasFiltradas;
 
   return (
-    <Layout cabecalho={{ titulo: 'Calendário' }}>
+    <Layout>
       <h1 className="titulo">Calendário agrícola</h1>
+
+      {usuario?.tipo === 'AGRICULTORA' && <MeusPlantiosNoCalendario />}
+
+      <h2 className="subtitulo subtitulo--sem-margem">Épocas de cada espécie</h2>
 
       <form onSubmit={aoBuscar} className="busca" role="search">
         <Campo id="busca" rotulo="Buscar espécie">
