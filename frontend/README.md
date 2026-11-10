@@ -18,6 +18,7 @@ Equipe **vertex**: Alice Quely, João Ribeiro, Karolayne Diniz, Maria Helena e M
 | 03 | Meus plantios (com filtros) | `/plantios` | RF06 |
 | 04 | Cadastrar / editar / excluir plantio | `/plantios/novo` e `/plantios/:id/editar` | RF03, RF04, RF05 |
 | 05 | Calendário agrícola | `/calendario` | RF07 |
+| 05b | Calendário do plantio (etapas + chuva prevista) | `/plantios/:id/calendario` | RF07 |
 | 06 | Dashboard da comunidade | `/comunidade` | RF08, RF09 |
 | 07 | Validação de dados | dentro da tela 04 | RN02, RN03 |
 | 08 | Responsável pela comunidade | `/coordenadora` | perfil de quem cuida da comunidade |
@@ -63,7 +64,8 @@ semear-frontend/
     ├── main.jsx              # ponto de entrada do React
     ├── App.jsx               # mapa de rotas (URL → tela)
     ├── config/
-    │   └── dados.js          # comunidades, espécies, tipos de cultivo, calendário de referência
+    │   ├── dados.js          # comunidades, espécies, tipos de cultivo, calendário de referência
+    │   └── ciclos.js         # etapas do ciclo de cada espécie + épocas de chuva da região
     ├── context/
     │   └── AuthContext.jsx   # login/logout disponível em todas as telas
     ├── services/             # conversa com a API
@@ -71,13 +73,16 @@ semear-frontend/
     │   ├── authService.js
     │   ├── plantioService.js
     │   ├── calendarioService.js
+    │   ├── climaService.js   # previsão de chuva (Open-Meteo) com cache
     │   └── dashboardService.js
     ├── utils/
     │   ├── validacoes.js     # RN02, RN03, contato, senha...
-    │   └── formatadores.js   # datas, m², nomes
+    │   ├── formatadores.js   # datas, m², nomes
+    │   └── datas.js          # contas com datas do calendário (sem problema de fuso)
     ├── components/           # peças reutilizáveis
     │   ├── Aviso.jsx         # faixa de erro/sucesso/info
-    │   ├── Cabecalho.jsx     # "‹ voltar" ou "Olá, Nome"
+    │   ├── CalendarioMes.jsx # grade de um mês do calendário do plantio
+    │   ├── Cabecalho.jsx     # "Olá, Nome · Sair" nas abas; "‹ voltar" nas telas internas
     │   ├── Campo.jsx         # rótulo + campo + erro
     │   ├── Carregando.jsx
     │   ├── GraficoBarras.jsx # gráfico de espécies (sem biblioteca)
@@ -93,8 +98,10 @@ semear-frontend/
     │   ├── MeusPlantios.jsx  # Tela 03
     │   ├── FormPlantio.jsx   # Telas 04 e 07
     │   ├── Calendario.jsx    # Tela 05
+    │   ├── CalendarioPlantio.jsx # Tela 05b — calendário de um plantio
     │   ├── Dashboard.jsx     # Tela 06
     │   ├── Coordenadora.jsx  # Tela 08
+    │   ├── Agricultoras.jsx  # Tela 08b
     │   └── NaoEncontrada.jsx # página 404
     └── styles/
         └── global.css        # cores e fontes da identidade visual
@@ -115,6 +122,25 @@ semear-frontend/
 
 Fontes: **Baloo 2** (títulos) e **Work Sans** (textos). Campos e botões com 52 px de altura para facilitar o toque.
 
+Todas as cores ficam como variáveis no início de `src/styles/global.css`. Bordas de campos, contorno de foco e textos passam no contraste mínimo do WCAG.
+
+---
+
+## 📅 Calendário do plantio
+
+Tocar em um plantio (em **Meus plantios** ou na aba **Calendário**) abre o calendário dele, mês a mês:
+
+| Marca | Significado | De onde vem |
+|---|---|---|
+| Círculo verde | Dia do plantio | data cadastrada |
+| Bolinha verde-broto | Crescimento (germinação, floração) | `src/config/ciclos.js` |
+| Bolinha terra | Cuidados (capina, adubação) | `src/config/ciclos.js` |
+| Bolinha rosa | Colheita | `src/config/ciclos.js` |
+| Faixa azul | Chuva prevista (ex.: "13 a 17 de novembro") | previsão Open-Meteo |
+
+- **Etapas:** contadas em dias depois do plantio, com o ciclo **médio** de cada espécie. São estimativas: **devem ser conferidas por quem entende de agronomia** antes de chegar às agricultoras. Para ajustar, basta mudar os números em `ciclos.js`.
+- **Chuva:** previsão de até 16 dias para Rio Preto da Eva, pela API gratuita [Open-Meteo](https://open-meteo.com/) (sem chave; só a localização do município é enviada). Fica guardada no celular por 3 horas. Sem internet, usa a última previsão salva; se não houver, mostra só a época do ano (chuvosa dez–mai, seca jul–out).
+
 ---
 
 ## 🔌 Integração com o back-end
@@ -130,6 +156,8 @@ Rotas do `semear-backend` usadas pelo front:
 | PUT | `/plantios/:id` | Editar plantio |
 | DELETE | `/plantios/:id` | Excluir plantio |
 | GET | `/calendario/:especie` | Calendário |
+
+Serviço externo: `GET https://api.open-meteo.com/v1/forecast` (previsão de chuva do calendário do plantio).
 
 ### ⚠️ Pendências para combinar com o back-end (Karol e João)
 
