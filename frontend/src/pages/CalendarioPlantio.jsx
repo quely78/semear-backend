@@ -8,7 +8,7 @@
 //   - períodos de chuva previstos para Rio Preto da Eva
 //     (ex.: "10 a 17 de abril — Chuva prevista").
 //
-// Topo: um resumo de "hoje" (em que fase está e o que vem a seguir).
+// Topo: situação no estoque e registro da colheita (saída do estoque).
 // =============================================================
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
@@ -17,19 +17,20 @@ import CalendarioMes, { periodosDoDia } from '../components/CalendarioMes';
 import Carregando from '../components/Carregando';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
+import RegistroColheita from '../components/RegistroColheita';
 import { CATEGORIAS, CICLOS, epocaDoMes } from '../config/ciclos';
 import { buscarPrevisaoChuva } from '../services/climaService';
 import { buscarPlantio } from '../services/plantioService';
 import {
   deIso,
   diaEMes,
-  diasEntre,
   hoje as calcularHoje,
   nomeMes,
   partes,
   somarDias,
   textoPeriodo,
 } from '../utils/datas';
+import { formatarKg } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 /** Monta todos os períodos do plantio (ciclo + chuva), em ordem de data. */
@@ -52,9 +53,23 @@ function montarPeriodos(plantio, previsao) {
     dica: `Cerca de ${Math.round(p.mm)} mm de chuva no período.`,
   }));
 
+  // Colheita já registrada: aparece como um dia marcado no calendário
+  const colhido = plantio.dataColheita
+    ? [
+        {
+          categoria: 'colheita',
+          nome: 'Colhido',
+          inicio: deIso(plantio.dataColheita),
+          fim: deIso(plantio.dataColheita),
+          dica: `Você colheu ${formatarKg(plantio.quantidadeColhida)}.`,
+        },
+      ]
+    : [];
+
   return [
     { categoria: 'plantio', nome: 'Plantio', inicio: dataPlantio, fim: dataPlantio, dica: 'Dia em que você plantou.' },
     ...etapas,
+    ...colhido,
     ...chuvas,
   ].sort((a, b) => a.inicio.localeCompare(b.inicio));
 }
@@ -132,23 +147,10 @@ export default function CalendarioPlantio() {
     );
   }
 
-  const dataPlantio = deIso(plantio.dataPlantio);
   const temCiclo = Boolean(CICLOS[plantio.especie]);
   const { ano, mes } = mesVisivel;
 
-  // ---------- Resumo de hoje ----------
-  const diaDoPlantio = diasEntre(dataPlantio, hoje); // 0 = dia do plantio
-  const etapasHoje = periodosDoDia(periodos, hoje).filter((p) => p.categoria !== 'chuva');
-  const proximaEtapa = periodos.find((p) => p.categoria !== 'chuva' && p.inicio > hoje);
-  const proximaChuva = periodos.find((p) => p.categoria === 'chuva' && p.fim >= hoje);
-
   // ---------- Mês visível ----------
-  const primeiroDoMes = `${ano}-${String(mes + 1).padStart(2, '0')}-01`;
-  const ultimoDoMes = somarDias(
-    `${mes === 11 ? ano + 1 : ano}-${String(((mes + 1) % 12) + 1).padStart(2, '0')}-01`,
-    -1,
-  );
-  const periodosDoMes = periodos.filter((p) => p.inicio <= ultimoDoMes && p.fim >= primeiroDoMes);
   const epoca = epocaDoMes(mes);
   const mesDeHoje = partes(hoje);
   const estaNoMesDeHoje = mesDeHoje.ano === ano && mesDeHoje.mes === mes;
@@ -179,42 +181,8 @@ export default function CalendarioPlantio() {
         </p>
       </div>
 
-      {/* Resumo de hoje */}
-      <section className="cartao cal-hoje" aria-label="Resumo de hoje">
-        <p className="cal-hoje__titulo">
-          {diaDoPlantio < 0
-            ? `Faltam ${-diaDoPlantio} ${diaDoPlantio === -1 ? 'dia' : 'dias'} para o plantio`
-            : diaDoPlantio === 0
-              ? 'Hoje é o dia do plantio'
-              : `Hoje é o ${diaDoPlantio}º dia do plantio`}
-        </p>
-        {etapasHoje.filter((p) => p.categoria !== 'plantio').length > 0 && (
-          <ul className="cal-hoje__lista">
-            {etapasHoje
-              .filter((p) => p.categoria !== 'plantio')
-              .map((p) => (
-                <li key={p.nome}>
-                  <span className={`cal-bolinha cal-bolinha--${p.categoria}`} aria-hidden="true" />
-                  <span>
-                    <strong>{p.nome}</strong> — {p.dica}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        )}
-        {proximaEtapa && (
-          <p className="cal-hoje__proxima">
-            Próxima etapa: <strong>{proximaEtapa.nome}</strong>, a partir de{' '}
-            {diaEMes(proximaEtapa.inicio)}
-          </p>
-        )}
-        {proximaChuva && (
-          <p className="cal-hoje__proxima">
-            <Icone nome="chuva" tamanho={18} /> Próxima chuva:{' '}
-            <strong>{textoPeriodo(proximaChuva.inicio, proximaChuva.fim)}</strong>
-          </p>
-        )}
-      </section>
+      {/* Situação no estoque + registrar colheita (saída do estoque) */}
+      <RegistroColheita plantio={plantio} hoje={hoje} aoAtualizar={setPlantio} />
 
       {/* Navegação entre meses */}
       <div className="cal-navegacao">
@@ -294,28 +262,6 @@ export default function CalendarioPlantio() {
           )}
         </section>
       )}
-
-      {/* Tudo o que acontece no mês, em lista (mais fácil de ler que a grade) */}
-      <section className="cartao">
-        <h2 className="subtitulo">
-          Em {nomeMes(mes)}
-        </h2>
-        {periodosDoMes.length ? (
-          <ul className="cal-eventos">
-            {periodosDoMes.map((p) => (
-              <li key={`${p.categoria}-${p.inicio}`} className="cal-evento">
-                <span className={`cal-bolinha cal-bolinha--${p.categoria}`} aria-hidden="true" />
-                <div>
-                  <p className="cal-evento__periodo-destaque">{textoPeriodo(p.inicio, p.fim)}</p>
-                  <p className="cal-evento__nome">{p.nome}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="texto-apoio">Nenhuma etapa deste plantio neste mês.</p>
-        )}
-      </section>
 
       {/* De onde vêm as informações */}
       {!temCiclo && (

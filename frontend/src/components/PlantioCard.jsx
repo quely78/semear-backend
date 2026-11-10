@@ -6,11 +6,14 @@
 // (de lá a agricultora também pode editar ou excluir).
 // =============================================================
 import { Link } from 'react-router-dom';
+import { hoje } from '../utils/datas';
+import { formatarKg, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 export default function PlantioCard({ plantio, voltar }) {
   // Orgânico ganha uma marca verde-broto; convencional, cor de terra
   const organico = plantio.tipoCultivo?.toLowerCase().startsWith('org');
+  const situacao = situacaoDoPlantio(plantio, hoje());
 
   return (
     // "state" leva o plantio junto, assim a próxima tela abre sem esperar a API
@@ -30,6 +33,14 @@ export default function PlantioCard({ plantio, voltar }) {
         <p className="plantio-card__detalhe">
           Plantado em {formatarData(plantio.dataPlantio)} · {formatarArea(plantio.area)}
         </p>
+        {/* Situação no estoque (só quando pede atenção ou já foi colhido) */}
+        {situacao !== 'crescendo' && (
+          <span className={`selo selo--${situacao} plantio-card__selo`}>
+            {situacao === 'colhido'
+              ? `Colhido · ${formatarKg(plantio.quantidadeColhida)}`
+              : SITUACOES[situacao].rotulo}
+          </span>
+        )}
       </div>
       {/* Seta indicando que o cartão abre outra tela */}
       <span className="plantio-card__seta" aria-hidden="true">›</span>
