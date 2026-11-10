@@ -61,6 +61,30 @@ const DESENHOS = {
     </>
   ),
   avancar: <path d="M9 5l7 7-7 7" />,
+  // Cesta: registrar colheita
+  cesta: (
+    <>
+      <path d="M3.5 10h17l-1.8 9H5.3L3.5 10Z" />
+      <path d="M8 10l3-5.5M16 10l-3-5.5M9.5 14v2.5M14.5 14v2.5" />
+    </>
+  ),
+  // Caixa: aba "Estoque"
+  estoque: (
+    <>
+      <path d="M3.5 8l8.5-4 8.5 4v8.5L12 20.5l-8.5-4V8Z" />
+      <path d="M3.5 8L12 12l8.5-4M12 12v8.5" />
+    </>
+  ),
+  // Seta para baixo: baixar/exportar
+  baixar: (
+    <>
+      <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5" />
+      <path d="M5 19.5h14" />
+    </>
+  ),
+  // Seta subindo / descendo: entrada e saída do estoque
+  entrada: <path d="M12 19V6M6.5 11.5L12 6l5.5 5.5" />,
+  saida: <path d="M12 5v13M6.5 12.5L12 18l5.5-5.5" />,
   mais: <path d="M12 5v14M5 12h14" />,
   voltar: <path d="M15 5l-7 7 7 7" />,
   sair: (

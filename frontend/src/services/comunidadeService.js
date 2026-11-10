@@ -39,9 +39,15 @@ export async function listarComunidades() {
 }
 
 /**
- * Busca a comunidade da responsável logada e suas agricultoras.
- * @returns {Promise<{comunidade:{id:number,nome:string}|null, agricultoras:Array}>}
+ * Todos os plantios da comunidade da responsável logada (com o nome da agricultora).
+ * Usado no estoque da comunidade.
  */
+export async function listarPlantiosDaComunidade() {
+  const dados = await requisicao('/coordenadora/plantios');
+  return { comunidade: dados?.comunidade || null, plantios: dados?.plantios || [] };
+}
+
+/** Busca a comunidade da responsável logada e suas agricultoras. */
 export async function listarAgricultorasDaComunidade() {
   const dados = await requisicao('/coordenadora/agricultoras');
   return {

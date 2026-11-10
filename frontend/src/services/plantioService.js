@@ -42,6 +42,19 @@ export function editarPlantio(id, dados) {
   return requisicao(`/plantios/${id}`, { method: 'PUT', body: dados });
 }
 
+/**
+ * Registra a colheita (saída do estoque).
+ * dados = { dataColheita: "AAAA-MM-DD", quantidadeColhida: número em kg }
+ */
+export function registrarColheita(id, dados) {
+  return requisicao(`/plantios/${id}/colheita`, { method: 'PUT', body: dados });
+}
+
+/** Desfaz uma colheita registrada por engano. */
+export function desfazerColheita(id) {
+  return requisicao(`/plantios/${id}/colheita`, { method: 'DELETE' });
+}
+
 /** Exclui um plantio. */
 export function excluirPlantio(id) {
   return requisicao(`/plantios/${id}`, { method: 'DELETE' });
