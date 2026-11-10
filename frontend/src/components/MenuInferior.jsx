@@ -5,7 +5,7 @@
 //
 // As abas mudam conforme o perfil:
 //   Agricultora ................. Plantios · Calendário · Comunidade
-//   Responsável pela comunidade . Início · Agricultoras · Comunidade
+//   Responsável pela comunidade . Início · Agricultoras · Estoque · Comunidade
 // =============================================================
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +22,7 @@ const ABAS_AGRICULTORA = [
 const ABAS_RESPONSAVEL = [
   { para: '/coordenadora', icone: 'casa', rotulo: 'Início', exato: true },
   { para: '/coordenadora/agricultoras', icone: 'comunidade', rotulo: 'Agricultoras' },
+  { para: '/coordenadora/estoque', icone: 'estoque', rotulo: 'Estoque' },
   { para: '/comunidade', icone: 'grafico', rotulo: 'Comunidade' },
 ];
 
