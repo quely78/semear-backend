@@ -82,7 +82,6 @@ export default function Login() {
             id="contato"
             name="contato"
             type="text"
-            inputMode="email"
             autoComplete="username"
             placeholder="ex.: 92 99999-0000"
             value={form.contato}

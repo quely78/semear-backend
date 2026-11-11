@@ -191,7 +191,6 @@ export default function Cadastro() {
             id="contato"
             name="contato"
             type="text"
-            inputMode="email"
             autoComplete="username"
             placeholder="ex.: 92 99999-0000"
             value={form.contato}

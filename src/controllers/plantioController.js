@@ -46,4 +46,24 @@ async function excluir(req, res) {
   }
 }
 
-module.exports = { criar, listar, editar, excluir };
+async function registrarColheita(req, res) {
+  if (!agricultoraObrigatoria(req, res)) return;
+  try {
+    return res
+      .status(200)
+      .json(await plantioService.registrarColheita(req.params.id, req.body, req.user.id));
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+async function desfazerColheita(req, res) {
+  if (!agricultoraObrigatoria(req, res)) return;
+  try {
+    return res.status(200).json(await plantioService.desfazerColheita(req.params.id, req.user.id));
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+module.exports = { criar, listar, editar, excluir, registrarColheita, desfazerColheita };

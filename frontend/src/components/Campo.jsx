@@ -7,6 +7,9 @@ import Icone from './Icone';
 // Mostra (de cima para baixo): rótulo → campo → dica OU erro.
 // Quando há erro, a borda fica rosa e aparece "✕ mensagem" (Tela 7).
 //
+// Acessibilidade: o campo recebe "aria-describedby" (liga a dica ou o
+// erro ao campo, para o leitor de tela ler junto) e "aria-invalid".
+//
 // Uso:
 //   <Campo id="nome" rotulo="Nome" erro={erros.nome}>
 //     <input id="nome" ... />
@@ -15,9 +18,15 @@ import Icone from './Icone';
 export default function Campo({ id, rotulo, dica, erro, children }) {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const ehSenha = children?.props?.type === 'password';
-  const campo = ehSenha
-    ? cloneElement(children, { type: mostrarSenha ? 'text' : 'password' })
-    : children;
+
+  // Qual texto de apoio descreve o campo agora (erro tem prioridade)
+  const idDescricao = erro ? `${id}-erro` : dica ? `${id}-dica` : undefined;
+
+  const campo = cloneElement(children, {
+    ...(ehSenha && { type: mostrarSenha ? 'text' : 'password' }),
+    'aria-describedby': idDescricao,
+    'aria-invalid': erro ? true : undefined,
+  });
 
   return (
     <div className={`campo ${erro ? 'campo--erro' : ''}`}>
@@ -49,7 +58,11 @@ export default function Campo({ id, rotulo, dica, erro, children }) {
           ✕ {erro}
         </p>
       ) : (
-        dica && <p className="campo__dica">{dica}</p>
+        dica && (
+          <p className="campo__dica" id={`${id}-dica`}>
+            {dica}
+          </p>
+        )
       )}
     </div>
   );

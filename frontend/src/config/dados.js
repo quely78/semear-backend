@@ -42,18 +42,6 @@ export const TIPOS_CULTIVO = [
 ];
 
 // -------------------------------------------------------------
-// CALENDÁRIO DE REFERÊNCIA (Tela 5)
-// Valores do wireframe. São usados só se a API não responder
-// (ex.: sem internet ou espécie ainda não cadastrada no banco).
-// -------------------------------------------------------------
-export const CALENDARIO_REFERENCIA = [
-  { especie: 'Milho', epocaPlantio: 'set–nov', epocaColheita: 'fev–mar' },
-  { especie: 'Mandioca', epocaPlantio: 'o ano todo', epocaColheita: '8–12 meses' },
-  { especie: 'Feijão', epocaPlantio: 'fev / ago', epocaColheita: '75–90 dias' },
-  { especie: 'Abóbora', epocaPlantio: 'ago–out', epocaColheita: '3–4 meses' },
-];
-
-// -------------------------------------------------------------
 // FILTRO POR PERÍODO (Tela 3 — "Filtrar por data")
 // "dias" = quantos dias para trás a partir de hoje. null = sem filtro.
 // Usamos períodos prontos porque são mais fáceis de tocar no celular

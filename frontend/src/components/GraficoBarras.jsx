@@ -7,7 +7,7 @@
 import { formatarArea } from '../utils/formatadores';
 
 // Cores da identidade visual, usadas em sequência nas barras
-const CORES = ['#355E3B', '#86AE3E', '#BE3E73', '#6E4B2A', '#68A771'];
+export const CORES = ['#355E3B', '#86AE3E', '#BE3E73', '#6E4B2A', '#68A771'];
 
 export default function GraficoBarras({ itens }) {
   if (!itens?.length) {

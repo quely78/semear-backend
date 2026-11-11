@@ -49,4 +49,36 @@ async function excluir(id, agricultoraId) {
   await prisma.plantio.delete({ where: { id: Number(id) } });
 }
 
-module.exports = { criar, listar, editar, excluir };
+// Colheita = saída do estoque. Fica no próprio plantio (dataColheita + quantidadeColhida em kg).
+async function registrarColheita(id, dados, agricultoraId) {
+  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
+  if (!existente) throw new Error('Plantio não encontrado.');
+
+  const quantidade = Number(dados.quantidadeColhida);
+  if (!Number.isFinite(quantidade) || quantidade <= 0) {
+    throw new Error('quantidadeColhida deve ser um número maior que zero.');
+  }
+
+  const data = new Date(dados.dataColheita);
+  if (Number.isNaN(data.getTime())) throw new Error('dataColheita inválida.');
+  if (data < existente.dataPlantio) {
+    throw new Error('A data da colheita não pode ser antes da data do plantio.');
+  }
+  if (data > new Date()) throw new Error('A data da colheita não pode estar no futuro.');
+
+  return prisma.plantio.update({
+    where: { id: existente.id },
+    data: { dataColheita: data, quantidadeColhida: quantidade },
+  });
+}
+
+async function desfazerColheita(id, agricultoraId) {
+  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
+  if (!existente) throw new Error('Plantio não encontrado.');
+  return prisma.plantio.update({
+    where: { id: existente.id },
+    data: { dataColheita: null, quantidadeColhida: null },
+  });
+}
+
+module.exports = { criar, listar, editar, excluir, registrarColheita, desfazerColheita };

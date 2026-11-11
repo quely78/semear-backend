@@ -24,10 +24,12 @@ model Coordenadora {
   nome         String
   contato      String      @unique
   senhaHash    String
-  comunidadeId Int?        @unique
+  comunidadeId Int?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   comunidade   Comunidade? @relation(fields: [comunidadeId], references: [id])
+
+  @@index([comunidadeId])
 }
 
 model Comunidade {
@@ -36,7 +38,7 @@ model Comunidade {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   agricultoras Agricultora[]
-  coordenadora Coordenadora?
+  coordenadoras Coordenadora[]
 }
 
 model Plantio {
@@ -45,6 +47,9 @@ model Plantio {
   dataPlantio   DateTime
   area          Float
   tipoCultivo   String
+  // Colheita (saída do estoque): preenchidos quando a agricultora registra a colheita
+  dataColheita      DateTime?
+  quantidadeColhida Float?
   agricultoraId Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

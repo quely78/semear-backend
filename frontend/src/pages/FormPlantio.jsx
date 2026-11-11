@@ -118,6 +118,13 @@ export default function FormPlantio() {
     if (temErros(novosErros)) {
       // Mensagem geral da Tela 7
       setErroGeral('Corrija os campos destacados para continuar.');
+      // Leva a usuária até o primeiro campo com problema (no celular,
+      // ele pode estar escondido lá em cima, atrás do teclado)
+      const primeiro = Object.keys(novosErros).find((campo) => novosErros[campo]);
+      const elemento =
+        document.getElementById(primeiro) || document.querySelector(`[name="${primeiro}"]`);
+      elemento?.focus();
+      elemento?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -158,7 +165,14 @@ export default function FormPlantio() {
   const titulo = editando ? 'Editar plantio' : 'Novo plantio';
 
   return (
-    <Layout cabecalho={{ titulo, voltarPara: '/plantios' }} comMenu={false}>
+    <Layout
+      cabecalho={
+        editando
+          ? { voltarPara: `/plantios/${id}/calendario`, rotuloVoltar: 'Calendário do plantio' }
+          : { voltarPara: '/plantios', rotuloVoltar: 'Meus plantios' }
+      }
+      comMenu={false}
+    >
       {carregando ? (
         <Carregando texto="Abrindo plantio..." />
       ) : (
