@@ -1,11 +1,11 @@
 const calendarioService = require('../services/calendarioService');
+const { responderErro } = require('../utils/erros');
 
 async function consultarPorEspecie(req, res) {
   try {
-    const calendario = await calendarioService.consultarPorEspecie(req.params.especie);
-    return res.status(200).json(calendario);
+    return res.status(200).json(await calendarioService.consultarPorEspecie(req.params.especie));
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    return responderErro(res, error, 'Não foi possível consultar o calendário agora.');
   }
 }
 

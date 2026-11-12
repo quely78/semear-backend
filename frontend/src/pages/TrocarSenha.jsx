@@ -141,7 +141,7 @@ export default function TrocarSenha() {
             Sair
           </button>
         ) : (
-          <Link to={inicio} className="botao-texto">
+          <Link to="/perfil" className="botao-texto">
             Cancelar
           </Link>
         )}

@@ -23,6 +23,36 @@ function contatoValido(contato) {
   return email || ehTelefone;
 }
 
+/** Regra do nome (cadastro e perfil). Recebe o nome já sem espaços nas pontas. */
+function erroDoNome(nome) {
+  if (!nome) return 'Informe o nome.';
+  if (nome.length > NOME_MAXIMO) return `O nome pode ter no máximo ${NOME_MAXIMO} caracteres.`;
+  return '';
+}
+
+/** Regra do contato (cadastro e perfil). Recebe o contato já sem espaços nas pontas. */
+function erroDoContato(contato) {
+  if (!contato) return 'Informe um telefone ou e-mail.';
+  if (contato.length > CONTATO_MAXIMO || !contatoValido(contato)) return 'Digite um telefone ou e-mail válido.';
+  return '';
+}
+
+/**
+ * Confere o corpo do PUT /perfil (nome e contato) e devolve os dados limpos.
+ * @throws {ErroApi} 400 com { campos }
+ */
+function validarPerfil(body = {}) {
+  const nome = texto(body.nome);
+  const contato = texto(body.contato);
+  const campos = {};
+  const erroNome = erroDoNome(nome);
+  if (erroNome) campos.nome = erroNome;
+  const erroContato = erroDoContato(contato);
+  if (erroContato) campos.contato = erroContato;
+  if (Object.keys(campos).length) throw erroDeValidacao(campos);
+  return { nome, contato };
+}
+
 /** Regra da senha (cadastro e troca de senha). Devolve a mensagem de erro ou ''. */
 function erroDaSenha(senha) {
   if (senha === undefined || senha === null || senha === '') return 'Crie uma senha.';
@@ -59,13 +89,10 @@ function validarCadastro(body = {}) {
   const contato = texto(body.contato);
   const { senha, tipo } = body;
 
-  if (!nome) campos.nome = 'Informe o nome.';
-  else if (nome.length > NOME_MAXIMO) campos.nome = `O nome pode ter no máximo ${NOME_MAXIMO} caracteres.`;
-
-  if (!contato) campos.contato = 'Informe um telefone ou e-mail.';
-  else if (contato.length > CONTATO_MAXIMO || !contatoValido(contato)) {
-    campos.contato = 'Digite um telefone ou e-mail válido.';
-  }
+  const erroNome = erroDoNome(nome);
+  if (erroNome) campos.nome = erroNome;
+  const erroContato = erroDoContato(contato);
+  if (erroContato) campos.contato = erroContato;
 
   const erroSenha = erroDaSenha(senha);
   if (erroSenha) campos.senha = erroSenha;
@@ -86,4 +113,4 @@ function validarCadastro(body = {}) {
   return { nome, contato, senha, tipo, comunidadeId: semComunidade ? null : comunidadeId };
 }
 
-module.exports = { validarCadastro, validarTrocaDeSenha, erroDaSenha, ehEmail };
+module.exports = { validarCadastro, validarPerfil, validarTrocaDeSenha, erroDaSenha, ehEmail };

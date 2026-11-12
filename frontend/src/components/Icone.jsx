@@ -61,6 +61,13 @@ const DESENHOS = {
     </>
   ),
   avancar: <path d="M9 5l7 7-7 7" />,
+  // Pessoa: perfil
+  pessoa: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6" />
+    </>
+  ),
   // Chave: redefinir senha
   chave: (
     <>
