@@ -1,12 +1,5 @@
 const prisma = require('../config/prisma');
-
-// Erro com código HTTP, para o controller responder 404 quando faz sentido
-class ErroComStatus extends Error {
-  constructor(mensagem, status) {
-    super(mensagem);
-    this.status = status;
-  }
-}
+const { ErroApi } = require('../utils/erros');
 
 /** Comunidade da usuária logada (agricultora ou responsável). */
 async function comunidadeDaUsuaria(usuario) {
@@ -17,7 +10,7 @@ async function comunidadeDaUsuaria(usuario) {
   });
 
   if (!registro?.comunidade) {
-    throw new ErroComStatus('Você ainda não está ligada a nenhuma comunidade.', 404);
+    throw new ErroApi(404, 'Você ainda não está ligada a nenhuma comunidade.');
   }
   return registro.comunidade;
 }
@@ -88,6 +81,7 @@ async function painelDaComunidade(usuario) {
 }
 
 module.exports = {
+  comunidadeDaUsuaria,
   listarComunidades,
   agricultorasDaComunidade,
   plantiosDaComunidade,

@@ -1,4 +1,6 @@
 const comunidadeService = require('../services/comunidadeService');
+const senhaService = require('../services/senhaService');
+const { responderErro } = require('../utils/erros');
 
 /** Só a responsável pela comunidade (COORDENADORA) acessa. */
 function coordenadoraObrigatoria(req, res) {
@@ -32,8 +34,19 @@ async function listarComunidades(req, res) {
   }
 }
 
+/** A responsável gera uma senha provisória para uma agricultora da comunidade dela. */
+async function redefinirSenha(req, res) {
+  if (!coordenadoraObrigatoria(req, res)) return;
+  try {
+    return res.status(200).json(await senhaService.redefinirSenhaDaAgricultora(req.user, req.params.id));
+  } catch (error) {
+    return responderErro(res, error, 'Não foi possível redefinir a senha agora. Tente novamente.');
+  }
+}
+
 module.exports = {
   listarComunidades,
+  redefinirSenha,
   agricultoras: responder(comunidadeService.agricultorasDaComunidade, { soCoordenadora: true }),
   plantios: responder(comunidadeService.plantiosDaComunidade, { soCoordenadora: true }),
   painel: responder(comunidadeService.painelDaComunidade),

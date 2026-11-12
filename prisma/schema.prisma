@@ -12,6 +12,8 @@ model Agricultora {
   nome         String
   contato      String     @unique
   senhaHash    String
+  // true quando a responsável gerou uma senha provisória: no próximo login ela cria uma nova
+  senhaProvisoria Boolean @default(false)
   comunidadeId Int
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -57,6 +59,20 @@ model Plantio {
 
   @@index([especie])
   @@index([dataPlantio])
+}
+
+// Pedido de "esqueci minha senha" por e-mail. Guarda só o HASH do token do link,
+// nunca o token em si. Vale 30 minutos e só pode ser usado uma vez.
+model RedefinicaoSenha {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique
+  tipo      String    // AGRICULTORA ou COORDENADORA (a conta pode estar em qualquer das duas tabelas)
+  usuarioId Int
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tipo, usuarioId])
 }
 
 model CalendarioAgricola {

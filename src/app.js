@@ -25,6 +25,10 @@ app.use('/calendario', calendarioRoutes);
 app.use('/', comunidadeRoutes);
 
 app.use((error, req, res, next) => {
+  // Corpo da requisição com JSON mal formatado: erro de quem chamou, não do servidor
+  if (error.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: 'O corpo da requisição não é um JSON válido.' });
+  }
   console.error(error);
   res.status(500).json({ message: 'Erro interno do servidor.' });
 });
