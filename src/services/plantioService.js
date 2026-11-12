@@ -1,80 +1,69 @@
 const prisma = require('../config/prisma');
+const { ErroApi } = require('../utils/erros');
+const {
+  validarPlantio,
+  validarColheita,
+  validarFiltros,
+  lerIdDoPlantio,
+} = require('../validators/plantioValidator');
 
-function validarDados(dados) {
-  const { especie, dataPlantio, area, tipoCultivo } = dados;
+// Toda consulta usa o id da agricultora que vem do TOKEN: uma agricultora nunca
+// enxerga nem altera plantio de outra (para ela, o plantio "não existe": 404).
 
-  if (!especie || !dataPlantio || area === undefined || !tipoCultivo) {
-    throw new Error('especie, dataPlantio, area e tipoCultivo são obrigatórios.');
-  }
-
-  const areaNumerica = Number(area);
-  if (!Number.isFinite(areaNumerica) || areaNumerica <= 0) {
-    throw new Error('area deve ser um número maior que zero.');
-  }
-
-  const data = new Date(dataPlantio);
-  if (Number.isNaN(data.getTime())) {
-    throw new Error('dataPlantio inválida.');
-  }
-
-  return { especie, dataPlantio: data, area: areaNumerica, tipoCultivo };
+/** Plantio da própria agricultora, ou 404. */
+async function plantioDaAgricultora(id, agricultoraId) {
+  const plantio = await prisma.plantio.findFirst({
+    where: { id: lerIdDoPlantio(id), agricultoraId },
+  });
+  if (!plantio) throw new ErroApi(404, 'Plantio não encontrado.');
+  return plantio;
 }
 
 async function criar(dados, agricultoraId) {
-  const data = validarDados(dados);
+  const data = validarPlantio(dados);
   return prisma.plantio.create({ data: { ...data, agricultoraId } });
 }
 
-async function listar(agricultoraId, filtros) {
+async function listar(agricultoraId, query) {
+  const filtros = validarFiltros(query);
   const where = { agricultoraId };
   if (filtros.especie) where.especie = { contains: filtros.especie, mode: 'insensitive' };
   if (filtros.dataInicio || filtros.dataFim) {
     where.dataPlantio = {};
-    if (filtros.dataInicio) where.dataPlantio.gte = new Date(filtros.dataInicio);
-    if (filtros.dataFim) where.dataPlantio.lte = new Date(filtros.dataFim);
+    if (filtros.dataInicio) where.dataPlantio.gte = filtros.dataInicio;
+    if (filtros.dataFim) where.dataPlantio.lte = filtros.dataFim;
   }
 
   return prisma.plantio.findMany({ where, orderBy: { dataPlantio: 'desc' } });
 }
 
 async function editar(id, dados, agricultoraId) {
-  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
-  if (!existente) throw new Error('Plantio não encontrado.');
-  return prisma.plantio.update({ where: { id: Number(id) }, data: validarDados(dados) });
+  const existente = await plantioDaAgricultora(id, agricultoraId);
+  const data = validarPlantio(dados);
+
+  // Plantio já colhido: a nova data de plantio não pode ficar depois da colheita
+  if (existente.dataColheita && data.dataPlantio > existente.dataColheita) {
+    const msg = 'Este plantio já foi colhido: a data de plantio não pode ser depois da colheita.';
+    throw new ErroApi(400, msg, { dataPlantio: msg });
+  }
+
+  return prisma.plantio.update({ where: { id: existente.id }, data });
 }
 
 async function excluir(id, agricultoraId) {
-  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
-  if (!existente) throw new Error('Plantio não encontrado.');
-  await prisma.plantio.delete({ where: { id: Number(id) } });
+  const existente = await plantioDaAgricultora(id, agricultoraId);
+  await prisma.plantio.delete({ where: { id: existente.id } });
 }
 
 // Colheita = saída do estoque. Fica no próprio plantio (dataColheita + quantidadeColhida em kg).
 async function registrarColheita(id, dados, agricultoraId) {
-  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
-  if (!existente) throw new Error('Plantio não encontrado.');
-
-  const quantidade = Number(dados.quantidadeColhida);
-  if (!Number.isFinite(quantidade) || quantidade <= 0) {
-    throw new Error('quantidadeColhida deve ser um número maior que zero.');
-  }
-
-  const data = new Date(dados.dataColheita);
-  if (Number.isNaN(data.getTime())) throw new Error('dataColheita inválida.');
-  if (data < existente.dataPlantio) {
-    throw new Error('A data da colheita não pode ser antes da data do plantio.');
-  }
-  if (data > new Date()) throw new Error('A data da colheita não pode estar no futuro.');
-
-  return prisma.plantio.update({
-    where: { id: existente.id },
-    data: { dataColheita: data, quantidadeColhida: quantidade },
-  });
+  const existente = await plantioDaAgricultora(id, agricultoraId);
+  const colheita = validarColheita(dados, existente.dataPlantio);
+  return prisma.plantio.update({ where: { id: existente.id }, data: colheita });
 }
 
 async function desfazerColheita(id, agricultoraId) {
-  const existente = await prisma.plantio.findFirst({ where: { id: Number(id), agricultoraId } });
-  if (!existente) throw new Error('Plantio não encontrado.');
+  const existente = await plantioDaAgricultora(id, agricultoraId);
   return prisma.plantio.update({
     where: { id: existente.id },
     data: { dataColheita: null, quantidadeColhida: null },
