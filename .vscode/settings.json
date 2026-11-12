@@ -1,0 +1,4 @@
+{
+  // O projeto usa Prisma 6: a extensão do VS Code deve analisar o schema com as regras do Prisma 6
+  "prisma.pinToPrisma6": true
+}
