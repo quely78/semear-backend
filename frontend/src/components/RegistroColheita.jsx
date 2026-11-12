@@ -58,7 +58,15 @@ export default function RegistroColheita({ plantio, hoje, aoAtualizar }) {
       aoAtualizar(atualizado);
       setAbrindo(false);
     } catch (erro) {
-      setErroGeral(erro.message);
+      // A API chama a quantidade de "quantidadeColhida"; no formulário o campo é "quantidade"
+      if (erro.campos) {
+        setErros({
+          dataColheita: erro.campos.dataColheita || '',
+          quantidade: erro.campos.quantidadeColhida || '',
+        });
+      } else {
+        setErroGeral(erro.message);
+      }
     } finally {
       setSalvando(false);
     }

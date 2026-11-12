@@ -143,8 +143,19 @@ export default function FormPlantio() {
       // Sucesso: volta para a lista mostrando a confirmação
       navegar('/plantios', { replace: true, state: { mensagem: 'Plantio salvo com sucesso' } });
     } catch (erro) {
-      // Erro vindo da API (ex.: validação do back-end ou sem internet)
-      setErroGeral(erro.message);
+      // Erro vindo da API: se ela apontar o campo, o erro aparece embaixo dele
+      if (erro.campos) {
+        const campos = { ...erro.campos };
+        // A espécie digitada em "Outra espécie" fica no campo outraEspecie
+        if (campos.especie && form.especie === OUTRA_ESPECIE) {
+          campos.outraEspecie = campos.especie;
+          delete campos.especie;
+        }
+        setErros((atuais) => ({ ...atuais, ...campos }));
+        setErroGeral('Corrija os campos destacados para continuar.');
+      } else {
+        setErroGeral(erro.message);
+      }
       setSalvando(false);
     }
   }
