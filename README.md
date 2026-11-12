@@ -116,10 +116,31 @@ Depois disso, cada merge na `main` publica sozinho a versão nova.
 
 ---
 
-## Autenticação (`/auth`)
+## API: visão geral
 
-Todas as requisições e respostas usam JSON (`Content-Type: application/json`).
-Erros sempre vêm no formato:
+Endereços: `http://localhost:3000` no computador e `https://semear-api-37um.onrender.com` publicado.
+
+| Método | Rota | Login | Quem pode | Para quê |
+|---|---|---|---|---|
+| GET | `/health` | não | todos | A API e o banco estão no ar? |
+| GET | `/comunidades` | não | todos | Lista as comunidades (tela de cadastro) |
+| POST | `/auth/cadastro` | não | todos | Criar conta |
+| POST | `/auth/login` | não | todos | Entrar e receber o token |
+| POST | `/auth/esqueci-senha` | não | todos | Pedir o link de senha nova por e-mail |
+| POST | `/auth/redefinir-senha/validar` | não | todos | Conferir se o link do e-mail ainda vale |
+| POST | `/auth/redefinir-senha` | não | todos | Criar a senha nova pelo link do e-mail |
+| POST | `/auth/trocar-senha` | sim | qualquer perfil | Trocar a própria senha |
+| GET, PUT | `/perfil` | sim | qualquer perfil | Ver e editar nome e contato |
+| GET, POST | `/plantios` | sim | agricultora | Listar e registrar os próprios plantios |
+| PUT, DELETE | `/plantios/:id` | sim | agricultora | Editar e excluir um plantio dela |
+| PUT, DELETE | `/plantios/:id/colheita` | sim | agricultora | Registrar e desfazer a colheita |
+| GET | `/coordenadora/agricultoras` | sim | responsável | Agricultoras da comunidade dela |
+| GET | `/coordenadora/plantios` | sim | responsável | Plantios da comunidade (estoque) |
+| POST | `/coordenadora/agricultoras/:id/redefinir-senha` | sim | responsável | Gerar senha provisória para uma agricultora |
+| GET | `/dashboard/comunidade` | sim | qualquer perfil | Números da comunidade da usuária |
+| GET | `/calendario/:especie` | não | todos | Época de plantio e colheita de uma espécie |
+
+Todas as requisições e respostas usam JSON (`Content-Type: application/json`). Erros sempre vêm no formato:
 
 ```json
 {
@@ -132,6 +153,31 @@ Erros sempre vêm no formato:
 - `campos` só vem em erros de validação: diz o problema de **cada** campo, para o front mostrar embaixo dele. Quando há mais de um campo errado, a `message` é genérica e os detalhes ficam em `campos`.
 - Erros inesperados (banco fora do ar, bug) voltam com status `500` e uma mensagem genérica. O detalhe técnico fica só no log do servidor.
 - Um corpo que não é JSON válido volta com `400` e a mensagem `O corpo da requisição não é um JSON válido.`
+- Corpo maior que 20 KB: `413` com `O corpo da requisição é grande demais.`
+- Rota que não existe: `404` com `Rota não encontrada.`
+- Perfil errado (ex.: responsável numa rota de plantio): `403`.
+- Algo que não existe **ou é de outra pessoa** (ex.: plantio de outra agricultora): `404`. A resposta é a mesma de propósito, para não revelar o que existe.
+
+### Segurança
+
+- **Cabeçalhos de segurança** com o [helmet](https://helmetjs.github.io/): o navegador não "adivinha" o tipo dos arquivos, a API não abre dentro de iframes de outros sites e o servidor não anuncia que é Express.
+- **CORS:** em produção, só o endereço do front (`CORS_ORIGIN`) pode chamar a API pelo navegador.
+- **Validação de entradas:** todo corpo, filtro e id da URL é conferido antes de chegar ao banco, com as mesmas regras do front. Valores fora do esperado voltam como `400` com `campos`, nunca como erro interno.
+- **Dados de cada pessoa:** o id da usuária vem sempre do token, nunca da requisição. Uma agricultora só vê e altera os próprios plantios; a responsável só vê a própria comunidade.
+- **Limite de tentativas** (resposta `429`, com o cabeçalho `RateLimit` dizendo quando tentar de novo):
+
+| Rota | Limite | Mensagem |
+|---|---|---|
+| `POST /auth/login` | 5 senhas **erradas** seguidas para a mesma conta, no mesmo aparelho, em 15 min (logins certos não contam) | `Muitas tentativas de entrar com senha errada. Espere 15 minutos e tente de novo.` |
+| `POST /auth/login` | 30 tentativas erradas do mesmo aparelho em 15 min, somando todas as contas | `Muitas tentativas de login a partir desta conexão. Espere 15 minutos e tente de novo.` |
+| `POST /auth/cadastro` | 10 por hora, por aparelho | `Muitos cadastros a partir desta conexão. Tente de novo mais tarde.` |
+| `/auth/esqueci-senha` e `/auth/redefinir-senha*` | 10 em 15 min, por aparelho | `Muitos pedidos de recuperação de senha. Espere 15 minutos e tente de novo.` |
+
+Os limites ficam na memória da API e zeram quando ela reinicia. No Render, a API confia no IP enviado pelo proxy dele (`trust proxy`), para cada usuária ser contada separadamente. Para testes automatizados, `LIMITES_DESLIGADOS=1` desliga todos.
+
+---
+
+## Autenticação (`/auth`)
 
 ### Perfis
 
@@ -255,6 +301,8 @@ Confere o contato e a senha e devolve um token de acesso.
 |---|---|
 | `contato e senha são obrigatórios.` | Falta o contato ou a senha (ou a senha não veio como texto). |
 | `Contato ou senha inválidos.` | O contato não existe **ou** a senha está errada. A mensagem é a mesma de propósito, para não revelar quais contatos estão cadastrados. |
+
+Depois de 5 senhas erradas seguidas, a resposta passa a ser `429` por 15 minutos, mesmo com a senha certa (ver **Segurança**).
 
 ---
 
@@ -396,6 +444,52 @@ Qualquer usuária logada troca a própria senha. Serve para sair da senha provis
 
 ---
 
+### Perfil (`/perfil`)
+
+Dados da usuária logada, agricultora ou responsável. O id vem sempre do token: ninguém consegue ver ou editar o perfil de outra pessoa por aqui. No front, a tela abre ao tocar no **"Olá, Nome"** do cabeçalho.
+
+#### `GET /perfil`
+
+**Resposta — `200 OK`**
+
+```json
+{
+  "id": 7,
+  "nome": "Maria Souza",
+  "contato": "92 99999-0000",
+  "tipo": "AGRICULTORA",
+  "comunidade": { "id": 1, "nome": "Comunidade 1" },
+  "criadoEm": "2026-11-12T22:00:00.000Z"
+}
+```
+
+Nunca devolve a senha nem o hash dela. `comunidade` é `null` para uma responsável sem comunidade.
+
+#### `PUT /perfil`
+
+Muda o **nome** e o **contato**. O contato é também o login.
+
+```json
+{ "nome": "Maria Souza", "contato": "maria@email.com" }
+```
+
+- Os dois campos são obrigatórios e seguem as mesmas regras do cadastro.
+- O contato continua único entre agricultoras e responsáveis. Manter o próprio contato é permitido.
+- **Tipo, comunidade e senha não mudam por aqui.** Outros campos enviados são ignorados. A senha tem rota própria (`POST /auth/trocar-senha`).
+- Depois de mudar o contato, o login passa a ser feito com o contato novo. O token atual continua valendo.
+
+**Resposta — `200 OK`:** o perfil atualizado, no mesmo formato do `GET`.
+
+**Erros**
+
+| Status | Mensagem | Quando acontece |
+|---|---|---|
+| `400` | Mensagens do cadastro em `campos.nome` / `campos.contato` | Nome vazio ou longo demais, contato inválido. |
+| `400` | `Este telefone ou e-mail já é usado por outra conta.` (em `campos.contato`) | O contato já é de outra conta. |
+| `401` | Erros do middleware, ou `Sessão inválida. Entre de novo.` | Sem token, token inválido ou conta que não existe mais. |
+
+---
+
 ### Rotas protegidas (usando o token)
 
 As rotas que exigem login esperam o token no cabeçalho `Authorization`, com o prefixo `Bearer`:
@@ -415,13 +509,7 @@ O middleware [`src/middleware/auth.js`](src/middleware/auth.js) confere o token 
 
 Quando recebe `401` numa rota protegida, o front apaga a sessão e volta para a tela de login.
 
-**Rotas que usam o token hoje**
-
-| Rota | Quem pode usar |
-|---|---|
-| `/plantios` e `/plantios/:id/colheita` | Só `AGRICULTORA` (outro perfil recebe `403`). |
-| `/coordenadora/agricultoras`, `/coordenadora/plantios`, `/coordenadora/agricultoras/:id/redefinir-senha` | Só `COORDENADORA` (outro perfil recebe `403`). |
-| `/dashboard/comunidade`, `/auth/trocar-senha` | Qualquer perfil logado. |
+Quais rotas pedem login e qual perfil pode usar cada uma: tabela em **API: visão geral**. O perfil é conferido pelos middlewares de [`src/middleware/perfil.js`](src/middleware/perfil.js) (`soAgricultora`, `soResponsavel`); outro perfil recebe `403`.
 
 ### Exemplo rápido (curl)
 
@@ -439,3 +527,135 @@ curl -X POST http://localhost:3000/auth/login \
 # Rota protegida
 curl http://localhost:3000/plantios -H "Authorization: Bearer SEU_TOKEN"
 ```
+
+---
+
+## Plantios (`/plantios`)
+
+Só `AGRICULTORA`, com login. Cada agricultora vê e altera **só os próprios** plantios: o plantio de outra pessoa responde `404 Plantio não encontrado.`
+
+Formato de um plantio:
+
+```json
+{
+  "id": 16,
+  "especie": "Milho",
+  "dataPlantio": "2026-10-01T00:00:00.000Z",
+  "area": 12.5,
+  "tipoCultivo": "orgânico",
+  "dataColheita": null,
+  "quantidadeColhida": null,
+  "agricultoraId": 7,
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+```
+
+### `GET /plantios`
+
+Lista os plantios da agricultora, do mais novo para o mais antigo. Filtros opcionais na URL:
+
+| Filtro | Exemplo | O que faz |
+|---|---|---|
+| `especie` | `?especie=milho` | Espécie que contém o texto (sem diferenciar maiúsculas) |
+| `dataInicio` | `?dataInicio=2026-01-01` | Plantados a partir desta data |
+| `dataFim` | `?dataFim=2026-12-31` | Plantados até esta data |
+
+Data inválida no filtro: `400` com `campos.dataInicio` / `campos.dataFim`.
+
+### `POST /plantios` e `PUT /plantios/:id`
+
+```json
+{ "especie": "Milho", "dataPlantio": "2026-10-01", "area": "12,5", "tipoCultivo": "orgânico" }
+```
+
+| Campo | Regras |
+|---|---|
+| `especie` | Texto, até 60 caracteres. |
+| `dataPlantio` | `AAAA-MM-DD`, uma data que existe (31/02 não passa), no máximo **12 meses no futuro** (RN03). |
+| `area` | Em m², maior que zero (RN02), até 10.000.000. Aceita `12,5` ou `12.5`. |
+| `tipoCultivo` | `orgânico` ou `convencional` (aceita sem acento e com maiúsculas; é gravado como `orgânico` / `convencional`). |
+
+Respostas: `201` (criar) ou `200` (editar) com o plantio. Erros de validação: `400` com `campos`. Editar um plantio já colhido com a data de plantio depois da colheita também dá `400`.
+
+### `DELETE /plantios/:id`
+
+`204` sem corpo. Apaga o plantio (e a colheita registrada nele).
+
+### `PUT /plantios/:id/colheita` e `DELETE /plantios/:id/colheita`
+
+Registra a colheita (a "saída" do estoque) ou desfaz um registro feito por engano.
+
+```json
+{ "dataColheita": "2026-11-10", "quantidadeColhida": 35.5 }
+```
+
+| Campo | Regras |
+|---|---|
+| `dataColheita` | `AAAA-MM-DD`, não pode estar no futuro nem ser antes do plantio. |
+| `quantidadeColhida` | Em kg, maior que zero, até 1.000.000. |
+
+Resposta: `200` com o plantio atualizado (o `DELETE` volta `dataColheita` e `quantidadeColhida` para `null`).
+
+---
+
+## Comunidade e responsável
+
+### `GET /comunidades`
+
+Pública. `[{ "id": 1, "nome": "Comunidade 1" }, ...]`, em ordem de nome.
+
+### `GET /coordenadora/agricultoras`
+
+Só `COORDENADORA`. Agricultoras da comunidade dela, com totais:
+
+```json
+{
+  "comunidade": { "id": 1, "nome": "Comunidade 1" },
+  "agricultoras": [
+    { "id": 7, "nome": "Maria Souza", "contato": "92 99999-0000", "totalPlantios": 3, "areaTotal": 125, "areaEmCampo": 65 }
+  ]
+}
+```
+
+`areaEmCampo` é a área dos plantios ainda sem colheita.
+
+### `GET /coordenadora/plantios`
+
+Só `COORDENADORA`. Todos os plantios da comunidade, cada um com `agricultora: { id, nome }`. É a base da tela de estoque.
+
+### `GET /dashboard/comunidade`
+
+Qualquer perfil logado. Números da comunidade de quem está logada:
+
+```json
+{
+  "comunidade": { "id": 1, "nome": "Comunidade 1" },
+  "areaTotal": 170.5,
+  "agricultorasAtivas": 2,
+  "especies": [{ "especie": "Milho", "area": 40, "quantidade": 1 }]
+}
+```
+
+Rotas da responsável sem comunidade ligada: `404 Você ainda não está ligada a nenhuma comunidade.`
+
+---
+
+## Calendário (`/calendario/:especie`)
+
+Público. Época de plantio e de colheita de uma espécie da tabela `CalendarioAgricola`:
+
+```json
+{ "id": 1, "especie": "Milho", "epocaPlantio": "set–nov", "epocaColheita": "fev–mar" }
+```
+
+Espécie que não está na tabela: `404 Calendário não encontrado para a espécie informada.` A tabela ainda não tem seed; o calendário de cada plantio no app usa o ciclo das espécies guardado no front.
+
+---
+
+## Saúde (`/health`)
+
+Público. Usado pelo Render para saber se a publicação deu certo.
+
+- `200 { "status": "ok", "banco": "ok" }`: a API e o banco estão funcionando.
+- `503 { "status": "erro", "banco": "indisponível" }`: a API está no ar, mas não consegue falar com o banco.
