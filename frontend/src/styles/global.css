@@ -1888,3 +1888,71 @@ img {
   background: var(--areia-escura);
   color: var(--tinta-suave);
 }
+
+/* -------------------------------------------------------------
+   13. REDEFINIR SENHA (lista de agricultoras) E TROCAR SENHA
+   ------------------------------------------------------------- */
+.agricultora-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.redefinir__abrir {
+  align-self: flex-end;
+  min-height: 40px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--tinta-suave);
+}
+
+.redefinir__abrir:hover {
+  color: var(--verde-mata);
+}
+
+/* Caixa de confirmação e da senha gerada, logo abaixo do cartão */
+.redefinir {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 2px solid var(--linha-campo);
+  border-radius: var(--raio);
+  background: var(--papel);
+  font-size: 15px;
+}
+
+.redefinir--pronta {
+  border-color: var(--verde-mata);
+  background: var(--verde-claro);
+}
+
+.redefinir__senha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--papel);
+}
+
+.redefinir__senha code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--verde-mata);
+  user-select: all;
+}
+
+/* Passos numerados em "Esqueci minha senha" */
+.passos {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15px;
+}

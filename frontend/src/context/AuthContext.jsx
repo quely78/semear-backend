@@ -22,6 +22,16 @@ export function AuthProvider({ children }) {
     return dadosUsuario;
   }, []);
 
+  /** Troca a senha e, se era provisória, libera o resto do app. */
+  const trocarSenha = useCallback(async (senhaAtual, novaSenha) => {
+    await authService.trocarSenha(senhaAtual, novaSenha);
+    setUsuario((atual) => {
+      const atualizado = { ...atual, trocarSenha: false };
+      salvarSessao(obterToken(), atualizado);
+      return atualizado;
+    });
+  }, []);
+
   /** Encerra a sessão. */
   const sair = useCallback(() => {
     limparSessao();
@@ -37,7 +47,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ usuario, entrar, sair }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ usuario, entrar, sair, trocarSenha }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

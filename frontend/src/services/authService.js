@@ -25,3 +25,26 @@ export function cadastrar(dados) {
 export function login(contato, senha) {
   return requisicao('/auth/login', { method: 'POST', body: { contato, senha } });
 }
+
+/**
+ * Troca a senha da usuária logada.
+ * Usada depois de entrar com uma senha provisória (gerada pela responsável).
+ */
+export function trocarSenha(senhaAtual, novaSenha) {
+  return requisicao('/auth/trocar-senha', { method: 'POST', body: { senhaAtual, novaSenha } });
+}
+
+/** Esqueci minha senha: pede o link por e-mail. */
+export function pedirLinkPorEmail(contato) {
+  return requisicao('/auth/esqueci-senha', { method: 'POST', body: { contato } });
+}
+
+/** Confere se o link do e-mail ainda vale (antes de mostrar o formulário). */
+export function validarLinkDeSenha(token) {
+  return requisicao('/auth/redefinir-senha/validar', { method: 'POST', body: { token } });
+}
+
+/** Cria a senha nova usando o link do e-mail. */
+export function criarSenhaPeloLink(token, novaSenha) {
+  return requisicao('/auth/redefinir-senha', { method: 'POST', body: { token, novaSenha } });
+}

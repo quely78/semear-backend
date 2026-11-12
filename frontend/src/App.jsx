@@ -9,11 +9,15 @@
 //   05 Calendário agrícola . /calendario
 //      └ Calendário de um plantio /plantios/:id/calendario
 //   06 Dashboard comunidade  /comunidade
-//   09 Estoque (plantio = entrada, colheita = saída)
-//      /coordenadora/estoque (só a responsável pela comunidade)
 //   07 Validação ........... (dentro da tela 04: mensagens de erro/sucesso)
 //   08 Responsável pela comunidade /coordenadora
 //      └ Agricultoras da comunidade /coordenadora/agricultoras
+//        (com "Redefinir senha", que gera uma senha provisória)
+//   09 Estoque (plantio = entrada, colheita = saída)
+//      /coordenadora/estoque (só a responsável pela comunidade)
+//   10 Criar senha nova (após senha provisória) /trocar-senha
+//   11 Esqueci minha senha ... /esqueci-senha
+//      └ Link do e-mail ...... /redefinir-senha?token=...
 // =============================================================
 import { Navigate, Route, Routes } from 'react-router-dom';
 import RotaProtegida from './components/RotaProtegida';
@@ -24,6 +28,9 @@ import MeusPlantios from './pages/MeusPlantios';
 import FormPlantio from './pages/FormPlantio';
 import CalendarioPlantio from './pages/CalendarioPlantio';
 import Estoque from './pages/Estoque';
+import TrocarSenha from './pages/TrocarSenha';
+import EsqueciSenha from './pages/EsqueciSenha';
+import CriarSenhaNova from './pages/CriarSenhaNova';
 import Calendario from './pages/Calendario';
 import Dashboard from './pages/Dashboard';
 import Coordenadora from './pages/Coordenadora';
@@ -45,6 +52,8 @@ export default function App() {
       {/* Telas públicas (não precisam de login) */}
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Cadastro />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+      <Route path="/redefinir-senha" element={<CriarSenhaNova />} />
 
       {/* Telas exclusivas da agricultora */}
       <Route element={<RotaProtegida perfis={['AGRICULTORA']} />}>
@@ -58,6 +67,7 @@ export default function App() {
       <Route element={<RotaProtegida />}>
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/comunidade" element={<Dashboard />} />
+        <Route path="/trocar-senha" element={<TrocarSenha />} />
       </Route>
 
       {/* Telas exclusivas da responsável pela comunidade (COORDENADORA) */}

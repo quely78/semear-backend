@@ -109,8 +109,13 @@ export default function Cadastro() {
         state: { mensagem: 'Conta criada! Agora é só entrar.' },
       });
     } catch (erro) {
-      // Ex.: "Contato já cadastrado." ou comunidade que já tem responsável
-      setErroGeral(erro.message);
+      // Se a API apontar o campo com problema, o erro aparece embaixo dele;
+      // senão (ex.: sem internet), aparece no aviso geral do formulário
+      const camposDaTela = ['nome', 'comunidadeId', 'contato', 'senha'];
+      if (erro.campos) setErros((atuais) => ({ ...atuais, ...erro.campos }));
+      if (!erro.campos || Object.keys(erro.campos).some((c) => !camposDaTela.includes(c))) {
+        setErroGeral(erro.message);
+      }
     } finally {
       setEnviando(false);
     }

@@ -17,6 +17,11 @@ export default function RotaProtegida({ perfis }) {
     return <Navigate to="/login" replace state={{ de: local.pathname }} />;
   }
 
+  // Entrou com senha provisória → primeiro cria a senha nova, depois usa o app
+  if (usuario.trocarSenha && local.pathname !== '/trocar-senha') {
+    return <Navigate to="/trocar-senha" replace />;
+  }
+
   // Logada, mas com perfil sem permissão → volta para a tela inicial dela
   if (perfis && !perfis.includes(usuario.tipo)) {
     return <Navigate to="/" replace />;
