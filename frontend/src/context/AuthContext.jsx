@@ -32,6 +32,15 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  /** Atualiza os dados guardados da usuária (ex.: depois de editar o perfil). */
+  const atualizarUsuario = useCallback((dados) => {
+    setUsuario((atual) => {
+      const atualizado = { ...atual, ...dados };
+      salvarSessao(obterToken(), atualizado);
+      return atualizado;
+    });
+  }, []);
+
   /** Encerra a sessão. */
   const sair = useCallback(() => {
     limparSessao();
@@ -47,7 +56,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ usuario, entrar, sair, trocarSenha }}>
+    <AuthContext.Provider value={{ usuario, entrar, sair, trocarSenha, atualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   );

@@ -8,7 +8,7 @@
 // O título da tela fica só no conteúdo (h1), para não aparecer duas
 // vezes. No modo "voltar", o botão diz PARA ONDE ele leva.
 // =============================================================
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { primeiroNome } from '../utils/formatadores';
 import Icone from './Icone';
@@ -41,9 +41,15 @@ export default function Cabecalho({ voltarPara, rotuloVoltar = 'voltar' }) {
   // Modo saudação: em todas as abas do menu, com o botão Sair sempre visível
   return (
     <header className="cabecalho">
-      <p className="cabecalho__saudacao">
-        Olá, <strong>{primeiroNome(usuario?.nome)}</strong>
-      </p>
+      {/* A saudação leva ao perfil (ver e editar os próprios dados) */}
+      <Link to="/perfil" className="cabecalho__saudacao" aria-label="Meu perfil">
+        <span className="cabecalho__avatar" aria-hidden="true">
+          <Icone nome="pessoa" tamanho={18} />
+        </span>
+        <span>
+          Olá, <strong>{primeiroNome(usuario?.nome)}</strong>
+        </span>
+      </Link>
       <button type="button" className="botao-texto" onClick={aoSair}>
         <Icone nome="sair" tamanho={18} /> Sair
       </button>

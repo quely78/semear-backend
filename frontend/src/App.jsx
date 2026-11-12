@@ -17,6 +17,7 @@
 //      /coordenadora/estoque (só a responsável pela comunidade)
 //   10 Criar senha nova (após senha provisória) /trocar-senha
 //   11 Esqueci minha senha ... /esqueci-senha
+//   12 Meu perfil ............ /perfil (tocar no "Olá, Nome" do cabeçalho)
 //      └ Link do e-mail ...... /redefinir-senha?token=...
 // =============================================================
 import { Navigate, Route, Routes } from 'react-router-dom';
@@ -29,6 +30,7 @@ import FormPlantio from './pages/FormPlantio';
 import CalendarioPlantio from './pages/CalendarioPlantio';
 import Estoque from './pages/Estoque';
 import TrocarSenha from './pages/TrocarSenha';
+import Perfil from './pages/Perfil';
 import EsqueciSenha from './pages/EsqueciSenha';
 import CriarSenhaNova from './pages/CriarSenhaNova';
 import Calendario from './pages/Calendario';
@@ -68,6 +70,7 @@ export default function App() {
         <Route path="/calendario" element={<Calendario />} />
         <Route path="/comunidade" element={<Dashboard />} />
         <Route path="/trocar-senha" element={<TrocarSenha />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Route>
 
       {/* Telas exclusivas da responsável pela comunidade (COORDENADORA) */}

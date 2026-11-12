@@ -1956,3 +1956,77 @@ img {
   gap: 8px;
   font-size: 15px;
 }
+
+/* -------------------------------------------------------------
+   14. PERFIL
+   ------------------------------------------------------------- */
+
+/* "Olá, Nome" no cabeçalho vira um link para o perfil */
+a.cabecalho__saudacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+.cabecalho__avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  color: var(--verde-mata);
+}
+
+a.cabecalho__saudacao:hover .cabecalho__avatar {
+  background: var(--verde-mata);
+  color: #fff;
+}
+
+.perfil-cartao {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.perfil-cartao__avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--verde-mata);
+  color: #fff;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.perfil-cartao__nome {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--verde-mata);
+}
+
+.perfil-cartao__papel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rosa-texto);
+}
+
+.perfil-seguranca {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perfil-seguranca .subtitulo {
+  margin-bottom: 0;
+}
