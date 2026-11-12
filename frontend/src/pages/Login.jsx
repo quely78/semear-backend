@@ -19,7 +19,6 @@ export default function Login() {
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [mostrarAjudaSenha, setMostrarAjudaSenha] = useState(false);
 
   // Mensagem enviada pela tela de cadastro ("Conta criada...")
   const mensagemCadastro = local.state?.mensagem;
@@ -109,19 +108,11 @@ export default function Login() {
           Criar nova conta
         </Link>
 
-        {/* A API ainda não tem recuperação de senha: orientamos a procurar a coordenação */}
-        <button
-          type="button"
-          className="botao-texto"
-          onClick={() => setMostrarAjudaSenha((valor) => !valor)}
-        >
+        {/* Recuperação de senha: por e-mail (link) ou, para telefone, pela responsável
+            (senha provisória). A tela /esqueci-senha explica cada caminho. */}
+        <Link to="/esqueci-senha" state={{ contato: form.contato }} className="botao-texto">
           Esqueci minha senha
-        </button>
-        {mostrarAjudaSenha && (
-          <Aviso tipo="info">
-            Procure a coordenadora da sua comunidade para redefinir sua senha.
-          </Aviso>
-        )}
+        </Link>
       </form>
     </div>
   );

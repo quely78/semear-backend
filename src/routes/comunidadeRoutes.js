@@ -10,6 +10,11 @@ router.get('/comunidades', comunidadeController.listarComunidades);
 // Responsável pela comunidade
 router.get('/coordenadora/agricultoras', autenticar, comunidadeController.agricultoras);
 router.get('/coordenadora/plantios', autenticar, comunidadeController.plantios);
+router.post(
+  '/coordenadora/agricultoras/:id/redefinir-senha',
+  autenticar,
+  comunidadeController.redefinirSenha,
+);
 
 // Qualquer usuária logada: números da própria comunidade
 router.get('/dashboard/comunidade', autenticar, comunidadeController.painel);

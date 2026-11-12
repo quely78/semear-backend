@@ -1,18 +1,20 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
+const { ErroApi } = require('../utils/erros');
+const { validarCadastro } = require('../validators/authValidator');
 
-async function cadastrar({ nome, contato, senha, tipo, comunidadeId }) {
-  if (!nome || !contato || !senha || !tipo) {
-    throw new Error('nome, contato, senha e tipo são obrigatórios.');
-  }
+const contatoJaCadastrado = () =>
+  new ErroApi(400, 'Contato já cadastrado.', { contato: 'Este telefone ou e-mail já tem uma conta.' });
 
-  if (!['AGRICULTORA', 'COORDENADORA'].includes(tipo)) {
-    throw new Error('tipo deve ser AGRICULTORA ou COORDENADORA.');
-  }
+async function cadastrar(body) {
+  const { nome, contato, senha, tipo, comunidadeId } = validarCadastro(body);
 
-  if (tipo === 'AGRICULTORA' && !comunidadeId) {
-    throw new Error('comunidadeId é obrigatório para agricultora.');
+  if (comunidadeId !== null) {
+    const comunidade = await prisma.comunidade.findUnique({ where: { id: comunidadeId } });
+    if (!comunidade) {
+      throw new ErroApi(400, 'Comunidade não encontrada.', { comunidadeId: 'Comunidade não encontrada.' });
+    }
   }
 
   const contatoExistente = await Promise.all([
@@ -21,32 +23,31 @@ async function cadastrar({ nome, contato, senha, tipo, comunidadeId }) {
   ]);
 
   if (contatoExistente.some(Boolean)) {
-    throw new Error('Contato já cadastrado.');
+    throw contatoJaCadastrado();
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);
-  const dados = { nome, contato, senhaHash };
+  const dados = { nome, contato, senhaHash, comunidadeId };
   let usuario;
 
-  if (tipo === 'AGRICULTORA') {
-    usuario = await prisma.agricultora.create({
-      data: { ...dados, comunidadeId: Number(comunidadeId) }
-    });
-  } else {
-    usuario = await prisma.coordenadora.create({
-      data: {
-        ...dados,
-        comunidadeId: comunidadeId ? Number(comunidadeId) : null
-      }
-    });
+  try {
+    usuario = tipo === 'AGRICULTORA'
+      ? await prisma.agricultora.create({ data: dados })
+      : await prisma.coordenadora.create({ data: dados });
+  } catch (error) {
+    // Duas pessoas cadastrando o mesmo contato ao mesmo tempo: o @unique do banco barra a segunda
+    if (error.code === 'P2002') throw contatoJaCadastrado();
+    throw error;
   }
 
   return { id: usuario.id, nome: usuario.nome, contato: usuario.contato, tipo };
 }
 
-async function login({ contato, senha }) {
-  if (!contato || !senha) {
-    throw new Error('contato e senha são obrigatórios.');
+async function login(body = {}) {
+  const contato = typeof body.contato === 'string' ? body.contato.trim() : '';
+  const { senha } = body;
+  if (!contato || typeof senha !== 'string' || !senha) {
+    throw new ErroApi(401, 'contato e senha são obrigatórios.');
   }
 
   const agricultora = await prisma.agricultora.findUnique({ where: { contato } });
@@ -57,7 +58,7 @@ async function login({ contato, senha }) {
   const tipo = agricultora ? 'AGRICULTORA' : 'COORDENADORA';
 
   if (!usuario || !(await bcrypt.compare(senha, usuario.senhaHash))) {
-    throw new Error('Contato ou senha inválidos.');
+    throw new ErroApi(401, 'Contato ou senha inválidos.');
   }
 
   const token = jwt.sign(
@@ -66,7 +67,17 @@ async function login({ contato, senha }) {
     { expiresIn: '1d' }
   );
 
-  return { token, usuario: { id: usuario.id, nome: usuario.nome, contato: usuario.contato, tipo } };
+  return {
+    token,
+    usuario: {
+      id: usuario.id,
+      nome: usuario.nome,
+      contato: usuario.contato,
+      tipo,
+      // true = entrou com senha provisória: o front leva direto para a tela de criar senha nova
+      trocarSenha: Boolean(usuario.senhaProvisoria),
+    },
+  };
 }
 
 module.exports = { cadastrar, login };

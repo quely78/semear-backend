@@ -47,6 +47,14 @@ export async function listarPlantiosDaComunidade() {
   return { comunidade: dados?.comunidade || null, plantios: dados?.plantios || [] };
 }
 
+/**
+ * A responsável gera uma senha provisória para uma agricultora da comunidade.
+ * @returns {Promise<{senhaProvisoria:string, agricultora:{id:number,nome:string}}>}
+ */
+export function redefinirSenhaAgricultora(agricultoraId) {
+  return requisicao(`/coordenadora/agricultoras/${agricultoraId}/redefinir-senha`, { method: 'POST' });
+}
+
 /** Busca a comunidade da responsável logada e suas agricultoras. */
 export async function listarAgricultorasDaComunidade() {
   const dados = await requisicao('/coordenadora/agricultoras');

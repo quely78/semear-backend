@@ -49,9 +49,15 @@ export function limparSessao() {
  * para as telas saberem, por exemplo, se foi 404 ou 401.
  */
 export class ErroApi extends Error {
-  constructor(mensagem, status) {
+  /**
+   * @param {string} mensagem
+   * @param {number} status
+   * @param {Object<string,string>} [campos] erro de cada campo, quando a API manda (ex.: { senha: '...' })
+   */
+  constructor(mensagem, status, campos) {
     super(mensagem);
     this.status = status;
+    this.campos = campos || null;
   }
 }
 
@@ -96,7 +102,11 @@ export async function requisicao(caminho, opcoes = {}) {
       limparSessao();
       window.dispatchEvent(new Event('semear:sessao-expirada'));
     }
-    throw new ErroApi(dados.message || 'Não foi possível concluir. Tente novamente.', resposta.status);
+    throw new ErroApi(
+      dados.message || 'Não foi possível concluir. Tente novamente.',
+      resposta.status,
+      dados.campos,
+    );
   }
 
   return dados;

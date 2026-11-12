@@ -61,6 +61,13 @@ const DESENHOS = {
     </>
   ),
   avancar: <path d="M9 5l7 7-7 7" />,
+  // Chave: redefinir senha
+  chave: (
+    <>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M11 12l8.5-8.5M16 7l2.5 2.5M14 9l2 2" />
+    </>
+  ),
   // Cesta: registrar colheita
   cesta: (
     <>

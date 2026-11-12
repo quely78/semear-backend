@@ -12,6 +12,7 @@ import Aviso from '../components/Aviso';
 import Campo from '../components/Campo';
 import Carregando from '../components/Carregando';
 import Layout from '../components/Layout';
+import RedefinirSenha from '../components/RedefinirSenha';
 import { listarAgricultorasDaComunidade } from '../services/comunidadeService';
 
 /** Remove acentos e deixa minúsculo, para a busca achar "Conceição" digitando "conceicao". */
@@ -98,8 +99,10 @@ export default function Agricultoras() {
           )}
           <ul className="lista">
             {visiveis.map((agricultora) => (
-              <li key={agricultora.id}>
+              <li key={agricultora.id} className="agricultora-item">
                 <AgricultoraCard agricultora={agricultora} />
+                {/* Fora do cartão (que é um link para o estoque dela) */}
+                <RedefinirSenha agricultora={agricultora} />
               </li>
             ))}
           </ul>
