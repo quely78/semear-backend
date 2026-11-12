@@ -1,10 +1,12 @@
 const express = require('express');
 const autenticar = require('../middleware/auth');
+const { soAgricultora } = require('../middleware/perfil');
 const plantioController = require('../controllers/plantioController');
 
 const router = express.Router();
 
-router.use(autenticar);
+// Todas as rotas de plantio: precisa de login e de ser agricultora
+router.use(autenticar, soAgricultora);
 router.post('/', plantioController.criar);
 router.get('/', plantioController.listar);
 router.put('/:id', plantioController.editar);
