@@ -1,0 +1,4 @@
+# Migrations do Prisma sempre com quebra de linha LF: o Prisma confere se uma
+# migration mudou comparando o arquivo byte a byte, e o Git no Windows poderia
+# trocar para CRLF e fazer a migration parecer alterada.
+prisma/migrations/** text eol=lf
