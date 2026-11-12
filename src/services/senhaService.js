@@ -5,6 +5,7 @@ const { ErroApi } = require('../utils/erros');
 const { validarTrocaDeSenha, erroDaSenha, ehEmail } = require('../validators/authValidator');
 const { comunidadeDaUsuaria } = require('./comunidadeService');
 const { enviarLinkDeRedefinicao } = require('./emailService');
+const { comProtocolo } = require('../config/url');
 
 // Sem letras e números que se confundem (l, 1, o, 0, i): a senha é passada de boca ou por WhatsApp
 const ALFABETO = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -63,7 +64,7 @@ async function trocarSenha(usuario, body) {
 // ---------------------------------------------------------------
 const VALIDADE_MINUTOS = 30;
 const INTERVALO_MINIMO_MS = 60 * 1000; // no máximo um e-mail por minuto para a mesma conta
-const FRONT_URL = (process.env.FRONT_URL || 'http://localhost:5173').replace(/\/$/, '');
+const FRONT_URL = comProtocolo(process.env.FRONT_URL || 'http://localhost:5173');
 
 const hashDoToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 

@@ -5,15 +5,29 @@ O front-end fica em [`frontend/`](frontend/README.md).
 
 ## Como rodar
 
-Pré-requisitos: Node.js 18+ e Docker Desktop aberto.
+Pré-requisitos: Node.js 20+ e Docker Desktop aberto.
 
 ```bash
-docker compose up -d      # sobe o PostgreSQL local (porta 5433)
+docker compose up -d        # sobe o PostgreSQL local (porta 5433)
 npm install
-npx prisma db push        # cria/atualiza as tabelas
-npm run db:seed           # cadastra as comunidades iniciais
-npm run dev               # API em http://localhost:3000
+npx prisma migrate deploy   # cria/atualiza as tabelas pelas migrations
+npm run db:seed             # cadastra as comunidades iniciais
+npm run dev                 # API em http://localhost:3000
 ```
+
+### Mudanças no banco (migrations)
+
+As tabelas são criadas pelas migrations da pasta `prisma/migrations/`, que **vão para o GitHub**. São elas que o Render usa para montar o banco de produção.
+
+- **Para mudar o banco:** edite o `prisma/schema.prisma` e rode `npx prisma migrate dev --name descricao-curta`. Isso cria uma migration nova; faça o commit dela junto com o schema.
+- **Não use mais `npx prisma db push`.** Ele altera o banco sem criar migration, e a mudança não chega ao Render.
+
+> **Se o seu banco local foi criado com `db push`** (antes de as migrations irem para o GitHub), o `migrate deploy` vai reclamar que as tabelas já existem. Marque as migrations como já aplicadas, uma vez só:
+> ```bash
+> npx prisma migrate resolve --applied 20261029191831_init
+> npx prisma migrate resolve --applied 20261112120000_responsaveis_colheita_e_senhas
+> ```
+> Ou apague o banco local e recrie do zero (perde os dados de teste): `docker compose down -v`, `docker compose up -d` e `npx prisma migrate deploy`.
 
 Variáveis do arquivo `.env` (na raiz). Para começar, copie o modelo: `cp .env.example .env` (no Windows: `copy .env.example .env`).
 
@@ -23,10 +37,28 @@ Variáveis do arquivo `.env` (na raiz). Para começar, copie o modelo: `cp .env.
 | `JWT_SECRET` | Chave usada para assinar e conferir os tokens de login |
 | `PORT` | Porta da API (padrão `3000`) |
 | `FRONT_URL` | Endereço do front, usado no link do e-mail de "esqueci minha senha" (padrão `http://localhost:5173`) |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Servidor de envio de e-mail. **Sem `SMTP_HOST`, nenhum e-mail é enviado:** o conteúdo aparece no terminal da API (serve para testar). |
-| `EMAIL_REMETENTE` | Quem aparece como remetente. Se ficar vazio, usa `SemeAR <SMTP_USER>`. |
+| `CORS_ORIGIN` | Quem pode chamar a API pelo navegador. Vazio = qualquer origem (desenvolvimento). Em produção, o endereço do front; vários separados por vírgula. |
+| `BREVO_API_KEY` | Chave de API do Brevo. **Quando preenchida, os e-mails saem pelo Brevo** (por HTTPS). É o jeito de usar em produção no Render. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Servidor SMTP (ex.: Gmail). Usado só quando não há `BREVO_API_KEY`. |
+| `EMAIL_REMETENTE` | Quem aparece como remetente, ex.: `SemeAR <conta@gmail.com>`. No Brevo, precisa ser um e-mail confirmado. Se ficar vazio, usa `SemeAR <SMTP_USER>`. |
 
-### Envio de e-mail pelo Gmail
+Sem `BREVO_API_KEY` nem `SMTP_HOST`, nenhum e-mail é enviado: o conteúdo aparece no terminal da API (serve para testar).
+
+### Envio de e-mail pelo Brevo (recomendado; funciona no Render)
+
+1. Crie uma conta gratuita em <https://www.brevo.com>.
+2. Confirme o remetente: **Senders, Domains & Dedicated IPs → Senders → Add a sender**, com o e-mail que vai aparecer como remetente. O Brevo manda um código para esse e-mail.
+3. Gere a chave: **SMTP & API → API Keys → Generate a new API key**. Copie (ela começa com `xkeysib-`).
+4. No `.env`:
+   ```
+   BREVO_API_KEY=xkeysib-...
+   EMAIL_REMETENTE="SemeAR <o-email-confirmado@gmail.com>"
+   ```
+5. Teste com `npm run email:teste` e reinicie a API.
+
+O plano gratuito do Brevo envia cerca de 300 e-mails por dia. E-mails enviados em nome de um endereço `@gmail.com` podem cair no spam; isso melhora com um domínio próprio verificado no Brevo.
+
+### Envio de e-mail pelo Gmail (SMTP)
 
 1. Na conta Google que vai enviar os e-mails, ative a **verificação em duas etapas** (Conta Google → Segurança).
 2. Crie uma **senha de app** em <https://myaccount.google.com/apppasswords> (nome sugerido: `SemeAR`). O Google mostra uma senha de 16 letras.
@@ -41,6 +73,46 @@ Variáveis do arquivo `.env` (na raiz). Para começar, copie o modelo: `cp .env.
 5. Reinicie a API (`npm run dev`).
 
 A senha de app só fica no `.env`, que não vai para o GitHub. Se ela vazar, apague-a na mesma página e crie outra. O Gmail gratuito envia até cerca de 500 e-mails por dia, o que basta para recuperação de senha.
+
+---
+
+## Publicar no Render
+
+O arquivo [`render.yaml`](render.yaml) descreve tudo o que o Render precisa criar, no plano gratuito:
+
+| Nome no Render | O que é |
+|---|---|
+| `semear-db` | Banco PostgreSQL |
+| `semear-api` | A API. Ao ligar, aplica as migrations, garante as comunidades iniciais e sobe o servidor. O Render confere `GET /health`. |
+| `semear-front` | O site do front-end (arquivos estáticos do React) |
+
+### Passo a passo (uma vez só)
+
+1. Crie uma conta em <https://render.com> entrando **com o GitHub** e autorize o acesso ao repositório `semear-backend`.
+2. No painel: **New → Blueprint**, escolha o repositório e a branch `main`. O Render lê o `render.yaml` e mostra os três itens.
+3. Ele pede os valores marcados como "preencher no painel". Use os endereços que o Render vai dar (normalmente o nome do serviço + `.onrender.com`):
+
+   | Variável | Onde | Valor |
+   |---|---|---|
+   | `FRONT_URL` | semear-api | `https://semear-front.onrender.com` |
+   | `CORS_ORIGIN` | semear-api | `https://semear-front.onrender.com` |
+   | `VITE_API_URL` | semear-front | `https://semear-api.onrender.com` |
+   | `BREVO_API_KEY` | semear-api | a chave de API do Brevo |
+   | `EMAIL_REMETENTE` | semear-api | `SemeAR <o-email-confirmado-no-brevo@gmail.com>` |
+
+4. Clique em **Apply** e espere os três ficarem verdes (a primeira vez demora alguns minutos).
+5. Confira se o endereço de cada serviço é mesmo o da tabela (se o nome já existir no Render, ele acrescenta letras, ex.: `semear-api-x1y2.onrender.com`). Se for diferente, corrija as três variáveis de endereço em **Environment** e faça um novo deploy. O front precisa de um deploy novo sempre que o `VITE_API_URL` mudar.
+6. Teste:
+   - `https://semear-api.onrender.com/health` → `{"status":"ok","banco":"ok"}`
+   - `https://semear-front.onrender.com` → tela de login. Cadastre uma conta e entre.
+
+Depois disso, cada merge na `main` publica sozinho a versão nova.
+
+### Limites do plano gratuito
+
+- **A API "dorme"** depois de uns 15 minutos sem uso. O primeiro acesso depois disso demora cerca de 1 minuto para responder; os seguintes são normais.
+- **O banco gratuito tem prazo e tamanho limitados.** Confira as regras atuais no painel do Render. Quando o banco vence, os dados são perdidos se não houver upgrade.
+- **E-mail:** o plano gratuito do Render pode bloquear SMTP (portas 465/587), por isso o `render.yaml` usa o **Brevo**, que envia por HTTPS. Não configure SMTP no Render.
 
 ---
 

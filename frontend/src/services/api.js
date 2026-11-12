@@ -7,7 +7,19 @@
 
 // Endereço da API. Vem do arquivo .env (VITE_API_URL).
 // Se não houver .env, usa o endereço padrão do back-end em desenvolvimento.
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+//
+// Testando pelo celular na mesma rede Wi-Fi: a página abre pelo IP do computador
+// (ex.: http://192.168.1.13:5174). Nesse caso "localhost" apontaria para o próprio
+// celular, então trocamos pelo mesmo endereço por onde a página foi aberta.
+function enderecoDaApi() {
+  // No Render, VITE_API_URL pode vir só com o domínio (ex.: "semear-api.onrender.com")
+  let configurado = (import.meta.env.VITE_API_URL || 'http://localhost:3000').trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(configurado)) configurado = `https://${configurado}`;
+  const paginaNoComputador = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (paginaNoComputador) return configurado;
+  return configurado.replace(/\/\/(localhost|127\.0\.0\.1)(?=[:/]|$)/, `//${window.location.hostname}`);
+}
+export const API_URL = enderecoDaApi();
 
 // Chaves usadas para guardar a sessão no navegador
 const CHAVE_TOKEN = 'semear_token';
