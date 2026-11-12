@@ -83,8 +83,19 @@ function escaparHtml(texto) {
 function enviarLinkDeRedefinicao({ para, nome, link, minutos }) {
   const primeiroNomeTexto = (nome || '').trim().split(/\s+/)[0] || 'Olá';
   const primeiroNome = escaparHtml(primeiroNomeTexto);
+
+  // Hora do pedido (horário do Amazonas). Deixa cada e-mail diferente dos anteriores:
+  // sem isso, o Gmail junta os pedidos numa conversa e ESCONDE o texto repetido (e o botão).
+  const quando = new Date().toLocaleString('pt-BR', {
+    timeZone: 'America/Manaus',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
   const texto = [
-    `${primeiroNomeTexto}, recebemos um pedido para criar uma senha nova no SemeAR.`,
+    `${primeiroNomeTexto}, recebemos um pedido para criar uma senha nova no SemeAR (${quando}).`,
     '',
     `Abra este link para criar a senha nova (vale por ${minutos} minutos e só funciona uma vez):`,
     link,
@@ -96,16 +107,21 @@ function enviarLinkDeRedefinicao({ para, nome, link, minutos }) {
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#22301f">
     <h1 style="font-size:22px;color:#355e3b;margin:0 0 12px">Seme<span style="color:#be3e73">AR</span></h1>
     <p>${primeiroNome}, recebemos um pedido para criar uma senha nova no SemeAR.</p>
+    <p style="font-size:14px;color:#5d6657;margin-top:-8px">Pedido feito em ${quando}.</p>
     <p style="margin:24px 0">
       <a href="${link}" style="background:#355e3b;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">
         Criar senha nova
       </a>
     </p>
+    <p style="font-size:14px;color:#5d6657">
+      Se o botão não aparecer ou não abrir, toque neste endereço:<br>
+      <a href="${link}" style="color:#355e3b;word-break:break-all">${link}</a>
+    </p>
     <p style="font-size:14px;color:#5d6657">O link vale por ${minutos} minutos e só funciona uma vez.</p>
     <p style="font-size:14px;color:#5d6657">Se não foi você que pediu, pode ignorar este e-mail: sua senha continua a mesma.</p>
   </div>`;
 
-  return enviarEmail({ para, assunto: 'SemeAR: criar uma senha nova', texto, html });
+  return enviarEmail({ para, assunto: `SemeAR: criar uma senha nova (${quando})`, texto, html });
 }
 
 /** Confere se o meio de envio aceita a chave/senha (usado por `npm run email:teste`). */
