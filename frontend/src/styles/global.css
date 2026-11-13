@@ -1829,7 +1829,8 @@ img {
 /* Atalhos em grade */
 .atalhos {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 4 atalhos: 2 por linha */
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 
@@ -2029,4 +2030,527 @@ a.cabecalho__saudacao:hover .cabecalho__avatar {
 
 .perfil-seguranca .subtitulo {
   margin-bottom: 0;
+}
+
+/* -------------------------------------------------------------
+   FINANÇAS — Dinheiro do plantio, gastos, vendas, rendimento,
+   relatório e vendas da comunidade
+   ------------------------------------------------------------- */
+
+/* Abas Calendário | Dinheiro (links com o visual do alternador) */
+.alternador__opcao--link {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.financas__rotulo {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.financas__grande {
+  margin: 2px 0 12px;
+  font-family: var(--fonte-titulo);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--verde-mata-escuro);
+}
+
+.financas__grande--negativo,
+.financas__negativo {
+  color: var(--rosa-texto);
+}
+
+.financas__dupla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.financas__caixa {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.financas__caixa span {
+  font-size: 13px;
+}
+
+.financas__caixa strong {
+  font-size: 17px;
+}
+
+.financas__caixa--entrada {
+  background: var(--verde-claro);
+  color: var(--verde-mata-escuro);
+}
+
+.financas__caixa--saida {
+  background: var(--rosa-claro);
+  color: var(--rosa-escuro);
+}
+
+.financas__texto {
+  margin: 12px 0 4px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.financas__texto--grande {
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.financas__minimo {
+  font-family: var(--fonte-titulo);
+  font-size: 24px;
+  color: var(--rosa-texto);
+}
+
+.financas__acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.financas__campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.financas__campos input {
+  min-width: 0;
+}
+
+.financas__linha-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.financas__total {
+  font-family: var(--fonte-titulo);
+  font-size: 24px;
+  color: var(--verde-mata-escuro);
+}
+
+.financas__total--saida {
+  color: var(--rosa-escuro);
+}
+
+.financas__barra {
+  gap: 2px;
+}
+
+.financas__lista {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.financas__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--linha);
+}
+
+.financas__item .texto-apoio {
+  margin: 0;
+  font-size: 13px;
+}
+
+.financas__cor {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.financas__item-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.financas__item-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.financas__apagar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--rosa-texto);
+  cursor: pointer;
+}
+
+.financas__apagar:hover {
+  background: var(--rosa-claro);
+}
+
+.financas__previa {
+  padding: 14px;
+  border-radius: var(--raio);
+  background: var(--verde-claro);
+  color: var(--verde-mata-escuro);
+}
+
+.financas__previa--alerta {
+  background: var(--rosa-fundo-erro);
+  border: 1px solid var(--rosa-claro);
+  color: var(--rosa-escuro);
+}
+
+.financas__previa--alerta .financas__total {
+  color: var(--rosa-escuro);
+}
+
+.financas__previa-nota {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.financas__destaque {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--raio);
+  background: var(--verde-claro);
+  color: var(--verde-mata-escuro);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.cartao .financas__destaque {
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.financas__sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+/* Ponto de equilíbrio: barra dos kg colhidos com a marca "pagou os gastos" */
+.equilibrio__titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.equilibrio__ok {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--verde-mata);
+  color: #fff;
+}
+
+.equilibrio {
+  position: relative;
+  margin-top: 14px;
+}
+
+.equilibrio__trilho {
+  display: flex;
+  height: 22px;
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--trilho);
+}
+
+.equilibrio__parte {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.equilibrio__parte--pagando {
+  background: var(--verde-mata);
+}
+
+.equilibrio__parte--lucro {
+  background: var(--verde-boiuna);
+}
+
+.equilibrio__marca {
+  position: absolute;
+  top: 22px;
+  width: 0;
+  height: 8px;
+  margin-left: -1px;
+  border-left: 2px solid var(--tinta);
+}
+
+.equilibrio__marca span {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.equilibrio__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.equilibrio__legenda li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.equilibrio__cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--trilho);
+  border: 1px solid var(--linha);
+}
+
+.equilibrio__cor--pagando {
+  border-color: transparent;
+  background: var(--verde-mata);
+}
+
+.equilibrio__cor--lucro {
+  border-color: transparent;
+  background: var(--verde-boiuna);
+}
+
+/* Bolinha da opção não encolhe quando o texto quebra ("Merenda (PNAE)") */
+.opcao input {
+  flex-shrink: 0;
+}
+
+/* Período: 2025 | 2026 | Tudo */
+.seletor-ano {
+  display: flex;
+  gap: 8px;
+}
+
+.seletor-ano__opcao {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--papel);
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.seletor-ano__opcao--ativa {
+  border-color: var(--verde-mata);
+  background: var(--verde-mata);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Barras horizontais com rótulo e valor */
+.barras {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barras__rotulos {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.barras__rotulos > span {
+  font-weight: 600;
+}
+
+.barras__nota {
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+.barras__barra {
+  background: var(--verde-mata);
+}
+
+.tabela__numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.numero--positivo {
+  border-color: transparent;
+  background: var(--verde-claro);
+}
+
+.numero--positivo .numero__valor {
+  color: var(--verde-mata-escuro);
+}
+
+/* Relatório (prévia na tela e o que sai na impressão/PDF) */
+.relatorio {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 18px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(34, 48, 31, 0.12);
+  color: var(--tinta);
+  font-size: 13px;
+}
+
+.relatorio__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--verde-mata);
+}
+
+.relatorio__marca {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--verde-mata);
+}
+
+.relatorio__subtitulo,
+.relatorio__periodo,
+.relatorio__rodape {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.relatorio__periodo {
+  text-align: right;
+}
+
+.relatorio__dados {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.relatorio__dados div {
+  display: flex;
+  gap: 4px;
+}
+
+.relatorio__dados dt {
+  font-weight: 700;
+}
+
+.relatorio__dados dd {
+  margin: 0;
+}
+
+.relatorio__tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.relatorio__tabela th,
+.relatorio__tabela td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--linha);
+}
+
+.relatorio__tabela th:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.relatorio__tabela thead th {
+  background: var(--verde-claro);
+  font-weight: 700;
+}
+
+.relatorio__tabela tfoot th,
+.relatorio__tabela tfoot td {
+  font-weight: 700;
+  border-bottom: 0;
+}
+
+.relatorio__resultado {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--verde-claro);
+  font-size: 14px;
+}
+
+.relatorio__vazio {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+
+@media (max-width: 360px) {
+  .financas__acoes,
+  .financas__campos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Impressão / "Salvar como PDF": só o documento do relatório */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .relatorio,
+  .relatorio * {
+    visibility: visible;
+  }
+  .relatorio {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    font-size: 12pt;
+  }
+  .relatorio__tabela thead th,
+  .relatorio__resultado {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
