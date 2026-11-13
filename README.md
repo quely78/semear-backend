@@ -134,9 +134,14 @@ Endereços: `http://localhost:3000` no computador e `https://semear-api-37um.onr
 | GET, POST | `/plantios` | sim | agricultora | Listar e registrar os próprios plantios |
 | PUT, DELETE | `/plantios/:id` | sim | agricultora | Editar e excluir um plantio dela |
 | PUT, DELETE | `/plantios/:id/colheita` | sim | agricultora | Registrar e desfazer a colheita |
+| GET | `/plantios/:id/financas` | sim | agricultora | Gastos, vendas, lucro, margem e ponto de equilíbrio do plantio |
+| POST, DELETE | `/plantios/:id/gastos` | sim | agricultora | Anotar e apagar gastos |
+| POST, DELETE | `/plantios/:id/vendas` | sim | agricultora | Anotar e apagar vendas (depois da colheita) |
+| GET | `/financas` | sim | agricultora | Finanças de todos os plantios dela no período |
 | GET | `/coordenadora/agricultoras` | sim | responsável | Agricultoras da comunidade dela |
 | GET | `/coordenadora/plantios` | sim | responsável | Plantios da comunidade (estoque) |
 | POST | `/coordenadora/agricultoras/:id/redefinir-senha` | sim | responsável | Gerar senha provisória para uma agricultora |
+| GET | `/coordenadora/financas` | sim | responsável | Totais de vendas e gastos da comunidade (sem valores individuais) |
 | GET | `/dashboard/comunidade` | sim | qualquer perfil | Números da comunidade da usuária |
 | GET | `/calendario/:especie` | não | todos | Época de plantio e colheita de uma espécie |
 
@@ -598,6 +603,53 @@ Registra a colheita (a "saída" do estoque) ou desfaz um registro feito por enga
 Resposta: `200` com o plantio atualizado (o `DELETE` volta `dataColheita` e `quantidadeColhida` para `null`).
 
 ---
+
+## Finanças (gastos, vendas, margem e ponto de equilíbrio)
+
+A agricultora anota o que **gastou** e o que **vendeu** em cada plantio. A API calcula tudo; o dinheiro é gravado como `Decimal` (centavos exatos) e as contas são feitas em centavos.
+
+| Conta | Como é calculada | Como aparece no app |
+|---|---|---|
+| `receita` | soma de (kg vendidos × preço do kg) | "Vendeu" |
+| `gastos` | soma dos gastos | "Gastou" |
+| `lucro` | receita − gastos | "Quanto sobrou" |
+| `margem` | lucro ÷ receita (`null` sem vendas) | "De cada R$ 10 que você vendeu, sobraram R$ X" |
+| `pontoEquilibrioKg` | gastos ÷ preço médio do kg | "Com X kg vendidos você pagou os gastos" |
+| `precoMinimoKg` | gastos ÷ kg colhidos | "Não venda por menos de R$ X/kg" |
+| `kgEmEstoque` | kg colhidos − kg vendidos | "X kg no estoque" |
+
+Regras:
+- A **venda é a saída do que foi colhido**: só dá para anotar venda depois de registrar a colheita, com data a partir da colheita e no máximo os kg que ainda estão no estoque. A gravação usa uma transação `Serializable`: duas vendas ao mesmo tempo não vendem o mesmo kg (a segunda recebe `409`).
+- Com vendas anotadas, não dá para **desfazer a colheita** nem mudá-la para menos kg do que o já vendido ou para depois da primeira venda.
+- Apagar o plantio apaga os gastos e as vendas dele.
+- Datas não podem estar no futuro.
+
+### Rotas da agricultora (só os próprios plantios; de outra pessoa = `404`)
+
+| Método | Rota | Corpo | Resposta |
+|---|---|---|---|
+| GET | `/plantios/:id/financas` | — | `{ plantio, gastos, vendas, resumo }` |
+| POST | `/plantios/:id/gastos` | `{ categoria, valor, data, descricao? }` | `201` + as finanças atualizadas |
+| DELETE | `/plantios/:id/gastos/:gastoId` | — | as finanças atualizadas |
+| POST | `/plantios/:id/vendas` | `{ quantidadeKg, precoKg, canal, data }` | `201` + as finanças atualizadas |
+| DELETE | `/plantios/:id/vendas/:vendaId` | — | as finanças atualizadas |
+| GET | `/financas?dataInicio=&dataFim=` | — | `{ periodo, total, plantios: [{ id, especie, area, tipoCultivo, dataPlantio, resumo }] }` |
+
+- `categoria`: `SEMENTE`, `ADUBO`, `MAO_DE_OBRA`, `TRANSPORTE` ou `OUTRO`.
+- `canal`: `FEIRA`, `PNAE`, `ATRAVESSADOR` ou `OUTRO`.
+- `valor` e `precoKg`: número ou texto (`12.5`, `"12,50"`, `"R$ 1.234,56"`). De R$ 0,01 a R$ 1.000.000 (gasto) e R$ 10.000 (kg).
+- `data`: `AAAA-MM-DD`. `descricao`: até 120 caracteres.
+- `GET /financas` considera os gastos e vendas **com data dentro do período** e lista só os plantios que têm algum deles. Sem datas = tudo.
+
+Erros de validação vêm em `campos` (ex.: `{ "quantidadeKg": "Você só tem 90 kg no estoque deste plantio." }`). Venda sem colheita: `400` com `Registre a colheita deste plantio antes de anotar vendas.`
+
+### Rota da responsável
+
+| Método | Rota | Resposta |
+|---|---|---|
+| GET | `/coordenadora/financas?dataInicio=&dataFim=` | `{ comunidade, periodo, total, agricultorasComVendas, totalAgricultoras, canais: [{ canal, receita, kgVendidos, precoMedioKg }], especies: [{ especie, receita, gastos, lucro, margem }] }` |
+
+Só **somas** da comunidade: a resposta não traz nome nem valor de nenhuma agricultora. Atenção: se só uma agricultora planta uma espécie, a linha dessa espécie mostra os números dela.
 
 ## Comunidade e responsável
 
