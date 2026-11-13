@@ -37,6 +37,12 @@ const ATALHOS = [
     texto: 'No campo e colhido',
   },
   {
+    para: '/coordenadora/vendas',
+    icone: 'cesta',
+    titulo: 'Vendas',
+    texto: 'Lucro e preço do kg',
+  },
+  {
     para: '/comunidade',
     icone: 'grafico',
     titulo: 'Números',

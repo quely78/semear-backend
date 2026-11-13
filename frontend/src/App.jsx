@@ -19,6 +19,13 @@
 //   11 Esqueci minha senha ... /esqueci-senha
 //   12 Meu perfil ............ /perfil (tocar no "Olá, Nome" do cabeçalho)
 //      └ Link do e-mail ...... /redefinir-senha?token=...
+//   13 Finanças (agricultora)
+//      Dinheiro do plantio ... /plantios/:id/dinheiro (aba ao lado do Calendário)
+//      Gastos ................ /plantios/:id/gastos
+//      Vendas ................ /plantios/:id/vendas
+//      Qual plantio rende mais /plantios/rendimento
+//      Relatório (Pronaf) .... /plantios/relatorio
+//   14 Vendas da comunidade .. /coordenadora/vendas (só totais)
 // =============================================================
 import { Navigate, Route, Routes } from 'react-router-dom';
 import RotaProtegida from './components/RotaProtegida';
@@ -38,6 +45,12 @@ import Dashboard from './pages/Dashboard';
 import Coordenadora from './pages/Coordenadora';
 import Agricultoras from './pages/Agricultoras';
 import NaoEncontrada from './pages/NaoEncontrada';
+import DinheiroPlantio from './pages/DinheiroPlantio';
+import GastosPlantio from './pages/GastosPlantio';
+import VendasPlantio from './pages/VendasPlantio';
+import Rendimento from './pages/Rendimento';
+import RelatorioFinanceiro from './pages/RelatorioFinanceiro';
+import VendasComunidade from './pages/VendasComunidade';
 
 /** Decide a "tela inicial" de acordo com quem está logada. */
 function Inicio() {
@@ -63,6 +76,11 @@ export default function App() {
         <Route path="/plantios/novo" element={<FormPlantio />} />
         <Route path="/plantios/:id/editar" element={<FormPlantio />} />
         <Route path="/plantios/:id/calendario" element={<CalendarioPlantio />} />
+        <Route path="/plantios/:id/dinheiro" element={<DinheiroPlantio />} />
+        <Route path="/plantios/:id/gastos" element={<GastosPlantio />} />
+        <Route path="/plantios/:id/vendas" element={<VendasPlantio />} />
+        <Route path="/plantios/rendimento" element={<Rendimento />} />
+        <Route path="/plantios/relatorio" element={<RelatorioFinanceiro />} />
       </Route>
 
       {/* Telas para qualquer pessoa logada */}
@@ -78,6 +96,7 @@ export default function App() {
         <Route path="/coordenadora" element={<Coordenadora />} />
         <Route path="/coordenadora/agricultoras" element={<Agricultoras />} />
         <Route path="/coordenadora/estoque" element={<Estoque />} />
+        <Route path="/coordenadora/vendas" element={<VendasComunidade />} />
       </Route>
 
       {/* Qualquer outro endereço */}
