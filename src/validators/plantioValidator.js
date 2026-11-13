@@ -113,4 +113,13 @@ function validarFiltros(query = {}) {
   return filtros;
 }
 
-module.exports = { validarPlantio, validarColheita, validarFiltros, lerIdDoPlantio };
+module.exports = {
+  validarPlantio,
+  validarColheita,
+  validarFiltros,
+  lerIdDoPlantio,
+  // usados também nas finanças do plantio
+  lerData,
+  hojeMais,
+  lerNumero,
+};
