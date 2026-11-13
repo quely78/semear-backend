@@ -12,6 +12,7 @@
 // =============================================================
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import AbasPlantio from '../components/AbasPlantio';
 import Aviso from '../components/Aviso';
 import CalendarioMes, { periodosDoDia } from '../components/CalendarioMes';
 import Carregando from '../components/Carregando';
@@ -180,6 +181,9 @@ export default function CalendarioPlantio() {
           {plantio.tipoCultivo?.toLowerCase()}
         </p>
       </div>
+
+      {/* Calendário | Dinheiro */}
+      <AbasPlantio plantio={plantio} ativa="calendario" voltar={voltar} />
 
       {/* Situação no estoque + registrar colheita (saída do estoque) */}
       <RegistroColheita plantio={plantio} hoje={hoje} aoAtualizar={setPlantio} />
