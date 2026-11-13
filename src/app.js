@@ -9,6 +9,7 @@ const plantioRoutes = require('./routes/plantioRoutes');
 const calendarioRoutes = require('./routes/calendarioRoutes');
 const comunidadeRoutes = require('./routes/comunidadeRoutes');
 const perfilRoutes = require('./routes/perfilRoutes');
+const financasRoutes = require('./routes/financasRoutes');
 const prisma = require('./config/prisma');
 const { listaDeOrigens } = require('./config/url');
 
@@ -51,6 +52,7 @@ app.get('/health', async (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/perfil', perfilRoutes);
 app.use('/plantios', plantioRoutes);
+app.use('/financas', financasRoutes);
 app.use('/calendario', calendarioRoutes);
 app.use('/', comunidadeRoutes);
 

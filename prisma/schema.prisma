@@ -56,9 +56,44 @@ model Plantio {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   agricultora   Agricultora @relation(fields: [agricultoraId], references: [id], onDelete: Cascade)
+  gastos        Gasto[]
+  vendas        Venda[]
 
   @@index([especie])
   @@index([dataPlantio])
+}
+
+// Finanças do plantio: o que a agricultora GASTOU (semente, adubo...) e o que VENDEU.
+// Dinheiro sempre em Decimal (centavos exatos), nunca Float.
+model Gasto {
+  id        Int      @id @default(autoincrement())
+  plantioId Int
+  categoria String   // SEMENTE, ADUBO, MAO_DE_OBRA, TRANSPORTE ou OUTRO
+  valor     Decimal  @db.Decimal(12, 2)
+  data      DateTime
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plantio   Plantio  @relation(fields: [plantioId], references: [id], onDelete: Cascade)
+
+  @@index([plantioId])
+  @@index([data])
+}
+
+// Venda = saída do estoque colhido (kg). Só existe depois da colheita.
+model Venda {
+  id           Int      @id @default(autoincrement())
+  plantioId    Int
+  quantidadeKg Float
+  precoKg      Decimal  @db.Decimal(12, 2)
+  canal        String   // FEIRA, PNAE, ATRAVESSADOR ou OUTRO
+  data         DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  plantio      Plantio  @relation(fields: [plantioId], references: [id], onDelete: Cascade)
+
+  @@index([plantioId])
+  @@index([data])
 }
 
 // Pedido de "esqueci minha senha" por e-mail. Guarda só o HASH do token do link,
