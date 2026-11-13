@@ -2,6 +2,7 @@ const express = require('express');
 const autenticar = require('../middleware/auth');
 const { soResponsavel } = require('../middleware/perfil');
 const comunidadeController = require('../controllers/comunidadeController');
+const financasController = require('../controllers/financasController');
 
 const router = express.Router();
 
@@ -17,6 +18,8 @@ router.post(
   ...responsavel,
   comunidadeController.redefinirSenha,
 );
+// Totais de vendas e gastos da comunidade (sem o valor de cada agricultora)
+router.get('/coordenadora/financas', ...responsavel, financasController.daComunidade);
 
 // Qualquer usuária logada: números da própria comunidade
 router.get('/dashboard/comunidade', autenticar, comunidadeController.painel);
