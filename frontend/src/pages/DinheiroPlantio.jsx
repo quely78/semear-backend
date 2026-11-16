@@ -18,7 +18,8 @@ import { formatarReais, formatarMargem, fraseDaMargem } from '../utils/dinheiro'
 import { formatarKg } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
-const porcento = (parte, total) => `${Math.min(Math.max((parte / total) * 100, 0), 100)}%`;
+const percentual = (parte, total) => Math.min(Math.max((parte / total) * 100, 0), 100);
+const porcento = (parte, total) => `${percentual(parte, total)}%`;
 
 /** Barra: kg colhidos, com o que foi vendido e a marca de "pagou os gastos". */
 function BarraEquilibrio({ resumo }) {
@@ -26,6 +27,9 @@ function BarraEquilibrio({ resumo }) {
   const marca = Math.min(pontoEquilibrioKg, kgColhidos);
   const pagando = Math.min(kgVendidos, marca); // kg que pagaram gastos
   const lucro = Math.max(kgVendidos - marca, 0); // kg vendidos depois disso
+  const marcaPercentual = percentual(marca, kgColhidos);
+  const alinhamentoMarca =
+    marcaPercentual <= 15 ? 'equilibrio__marca--inicio' : marcaPercentual >= 85 ? 'equilibrio__marca--fim' : '';
 
   return (
     <div className="equilibrio">
@@ -38,7 +42,7 @@ function BarraEquilibrio({ resumo }) {
         <span className="equilibrio__parte equilibrio__parte--lucro" style={{ width: porcento(lucro, kgColhidos) }} />
       </div>
       {pontoEquilibrioKg > 0 && pontoEquilibrioKg <= kgColhidos && (
-        <div className="equilibrio__marca" style={{ left: porcento(marca, kgColhidos) }}>
+        <div className={`equilibrio__marca ${alinhamentoMarca}`} style={{ left: `${marcaPercentual}%` }}>
           <span>{formatarKg(pontoEquilibrioKg)} pagam os gastos</span>
         </div>
       )}

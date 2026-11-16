@@ -13,7 +13,7 @@
 //   Se der certo: volta para a lista com "Plantio salvo com sucesso"
 // =============================================================
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Aviso from '../components/Aviso';
 import Campo from '../components/Campo';
 import Carregando from '../components/Carregando';
@@ -70,6 +70,7 @@ export default function FormPlantio() {
   );
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState('');
+  const [plantioCarregado, setPlantioCarregado] = useState(Boolean(plantioRecebido));
   const [carregando, setCarregando] = useState(editando && !plantioRecebido);
   const [salvando, setSalvando] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
@@ -79,7 +80,10 @@ export default function FormPlantio() {
     if (!editando || plantioRecebido) return;
     buscarPlantio(id)
       .then((plantio) => {
-        if (plantio) setForm(plantioParaForm(plantio));
+        if (plantio) {
+          setForm(plantioParaForm(plantio));
+          setPlantioCarregado(true);
+        }
         else setErroGeral('Plantio não encontrado.');
       })
       .catch((erro) => setErroGeral(erro.message))
@@ -174,6 +178,20 @@ export default function FormPlantio() {
   }
 
   const titulo = editando ? 'Editar plantio' : 'Novo plantio';
+
+  if (!carregando && editando && !plantioCarregado) {
+    return (
+      <Layout cabecalho={{ voltarPara: '/plantios', rotuloVoltar: 'Meus plantios' }} comMenu={false}>
+        <div className="formulario">
+          <h1 className="titulo">Plantio não encontrado</h1>
+          <Aviso tipo="erro">{erroGeral || 'O plantio solicitado não existe.'}</Aviso>
+          <Link className="botao botao--secundario" to="/plantios">
+            Voltar para meus plantios
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout

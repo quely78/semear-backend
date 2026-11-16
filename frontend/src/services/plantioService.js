@@ -4,6 +4,7 @@
 //   GET    /plantios?especie=&dataInicio=&dataFim=  → lista
 //   POST   /plantios        → cria
 //   PUT    /plantios/:id    → edita
+//   GET    /plantios/:id    → busca um plantio
 //   DELETE /plantios/:id    → exclui
 // =============================================================
 import { requisicao } from './api';
@@ -24,12 +25,9 @@ export function listarPlantios(filtros = {}) {
 
 /**
  * Busca um plantio pelo id.
- * A API ainda não tem GET /plantios/:id, então buscamos a lista
- * da própria agricultora e procuramos o item nela.
  */
-export async function buscarPlantio(id) {
-  const lista = await listarPlantios();
-  return lista.find((plantio) => String(plantio.id) === String(id)) || null;
+export function buscarPlantio(id) {
+  return requisicao(`/plantios/${id}`);
 }
 
 /** Cria um plantio. dados = { especie, dataPlantio, area, tipoCultivo } */

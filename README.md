@@ -13,7 +13,44 @@ npm install
 npx prisma migrate deploy   # cria/atualiza as tabelas pelas migrations
 npm run db:seed             # cadastra as comunidades iniciais
 npm run dev                 # API em http://localhost:3000
+npm test                    # executa os testes automatizados do back-end
 ```
+
+O `db:seed` cadastra somente as comunidades iniciais. Não é necessário manter uma
+agricultora fixa para testes: a suíte automatizada cria agricultoras temporárias e
+remove os registros ao terminar.
+
+## Branches e commits
+
+Cada tarefa deve ser desenvolvida em uma branch própria, criada a partir de `main`, usando o prefixo correspondente:
+
+- `feat/descricao-da-tarefa` para novas funcionalidades
+- `fix/descricao-do-problema` para correções
+- `docs/descricao-da-documentacao` para alterações de documentação
+
+Use commits no formato convencional, por exemplo:
+
+```text
+feat: adiciona cadastro de agricultora
+fix: corrige validação do login
+docs: documenta padrão de branches
+```
+
+Após testar localmente, abra um Pull Request para `main`. O merge na `main` dispara a publicação automática no Render.
+
+## Testes automatizados
+
+Com o Docker Desktop aberto e o PostgreSQL local em execução, rode na raiz do back-end:
+
+```powershell
+npm test
+```
+
+Os testes ficam em [`tests/plantios.test.js`](tests/plantios.test.js) e usam Jest
+com Supertest para testar a API sem abrir o navegador. A suíte cobre criação,
+listagem, busca por ID, edição, exclusão, autenticação, ID inexistente e tentativa
+de acesso ao plantio de outra agricultora. Os dados criados para os testes são
+temporários e removidos ao final.
 
 ### Mudanças no banco (migrations)
 
@@ -132,6 +169,7 @@ Endereços: `http://localhost:3000` no computador e `https://semear-api-37um.onr
 | POST | `/auth/trocar-senha` | sim | qualquer perfil | Trocar a própria senha |
 | GET, PUT | `/perfil` | sim | qualquer perfil | Ver e editar nome e contato |
 | GET, POST | `/plantios` | sim | agricultora | Listar e registrar os próprios plantios |
+| GET | `/plantios/:id` | sim | agricultora | Buscar um plantio específico da própria agricultora |
 | PUT, DELETE | `/plantios/:id` | sim | agricultora | Editar e excluir um plantio dela |
 | PUT, DELETE | `/plantios/:id/colheita` | sim | agricultora | Registrar e desfazer a colheita |
 | GET | `/plantios/:id/financas` | sim | agricultora | Gastos, vendas, lucro, margem e ponto de equilíbrio do plantio |
@@ -567,6 +605,13 @@ Lista os plantios da agricultora, do mais novo para o mais antigo. Filtros opcio
 | `dataFim` | `?dataFim=2026-12-31` | Plantados até esta data |
 
 Data inválida no filtro: `400` com `campos.dataInicio` / `campos.dataFim`.
+
+### `GET /plantios/:id`
+
+Busca um plantio específico da agricultora autenticada. O frontend usa esta rota
+quando precisa abrir ou editar um plantio, inclusive depois de recarregar a página.
+Um ID inexistente ou pertencente a outra agricultora retorna `404` com
+`Plantio não encontrado.`.
 
 ### `POST /plantios` e `PUT /plantios/:id`
 
