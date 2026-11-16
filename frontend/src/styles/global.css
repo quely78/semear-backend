@@ -2309,6 +2309,16 @@ a.cabecalho__saudacao:hover .cabecalho__avatar {
   font-weight: 600;
 }
 
+.equilibrio__marca--inicio span {
+  left: 4px;
+  transform: none;
+}
+
+.equilibrio__marca--fim span {
+  left: -4px;
+  transform: translateX(-100%);
+}
+
 .equilibrio__legenda {
   display: flex;
   flex-wrap: wrap;
