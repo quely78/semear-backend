@@ -115,4 +115,6 @@ model CalendarioAgricola {
   especie       String @unique
   epocaPlantio  String
   epocaColheita String
+  mesesPlantio  Int[]
+  mesesColheita Int[]
 }

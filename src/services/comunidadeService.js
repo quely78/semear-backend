@@ -40,7 +40,7 @@ async function agricultorasDaComunidade(usuario) {
       ...agricultora,
       totalPlantios: plantios.length,
       areaTotal: plantios.reduce((soma, p) => soma + p.area, 0),
-      // Área ainda na terra (plantios sem colheita registrada)
+      // área ainda na terra (plantios sem colheita registrada)
       areaEmCampo: plantios.filter((p) => !p.dataColheita).reduce((soma, p) => soma + p.area, 0),
     })),
   };
@@ -57,26 +57,39 @@ async function plantiosDaComunidade(usuario) {
   return { comunidade, plantios };
 }
 
-/** Números do painel da comunidade (área, agricultoras ativas, espécies). */
+/**
+ * Números do painel da comunidade (área, agricultoras ativas, espécies).
+ * As somas e contagens são feitas pelo banco (aggregate / groupBy / count),
+ * sem trazer todos os plantios para o Node.
+ */
 async function painelDaComunidade(usuario) {
   const comunidade = await comunidadeDaUsuaria(usuario);
-  const plantios = await prisma.plantio.findMany({
-    where: { agricultora: { comunidadeId: comunidade.id } },
-    select: { especie: true, area: true, agricultoraId: true },
-  });
+  const filtro = { agricultora: { comunidadeId: comunidade.id } };
 
-  const porEspecie = {};
-  plantios.forEach((p) => {
-    if (!porEspecie[p.especie]) porEspecie[p.especie] = { especie: p.especie, area: 0, quantidade: 0 };
-    porEspecie[p.especie].area += p.area;
-    porEspecie[p.especie].quantidade += 1;
-  });
+  const [total, porEspecie, agricultorasAtivas] = await Promise.all([
+    prisma.plantio.aggregate({ where: filtro, _sum: { area: true } }),
+    prisma.plantio.groupBy({
+      by: ['especie'],
+      where: filtro,
+      _sum: { area: true },
+      _count: { _all: true },
+      orderBy: { _sum: { area: 'desc' } },
+    }),
+    prisma.agricultora.count({
+      where: { comunidadeId: comunidade.id, plantios: { some: {} } },
+    }),
+  ]);
 
   return {
     comunidade,
-    areaTotal: plantios.reduce((soma, p) => soma + p.area, 0),
-    agricultorasAtivas: new Set(plantios.map((p) => p.agricultoraId)).size,
-    especies: Object.values(porEspecie).sort((a, b) => b.area - a.area),
+    areaTotal: total._sum.area ?? 0,
+    agricultorasAtivas,
+    totalEspecies: porEspecie.length,
+    especies: porEspecie.map((e) => ({
+      especie: e.especie,
+      area: e._sum.area ?? 0,
+      quantidade: e._count._all,
+    })),
   };
 }
 

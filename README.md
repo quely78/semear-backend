@@ -11,7 +11,7 @@ Pré-requisitos: Node.js 20+ e Docker Desktop aberto.
 docker compose up -d        # sobe o PostgreSQL local (porta 5433)
 npm install
 npx prisma migrate deploy   # cria/atualiza as tabelas pelas migrations
-npm run db:seed             # cadastra as comunidades iniciais
+npm run db:seed             # cadastra as comunidades iniciais e o calendário agrícola
 npm run dev                 # API em http://localhost:3000
 ```
 
@@ -83,7 +83,7 @@ O arquivo [`render.yaml`](render.yaml) descreve tudo o que o Render precisa cria
 | Nome no Render | O que é |
 |---|---|
 | `semear-db` | Banco PostgreSQL |
-| `semear-api` | A API. Ao ligar, aplica as migrations, garante as comunidades iniciais e sobe o servidor. O Render confere `GET /health`. |
+| `semear-api` | A API. Ao ligar, aplica as migrations, garante as comunidades iniciais e o calendário agrícola e sobe o servidor. O Render confere `GET /health`. |
 | `semear-front` | O site do front-end (arquivos estáticos do React) |
 
 ### Passo a passo (uma vez só)
@@ -142,7 +142,8 @@ Endereços: `http://localhost:3000` no computador e `https://semear-api-37um.onr
 | GET | `/coordenadora/plantios` | sim | responsável | Plantios da comunidade (estoque) |
 | POST | `/coordenadora/agricultoras/:id/redefinir-senha` | sim | responsável | Gerar senha provisória para uma agricultora |
 | GET | `/coordenadora/financas` | sim | responsável | Totais de vendas e gastos da comunidade (sem valores individuais) |
-| GET | `/dashboard/comunidade` | sim | qualquer perfil | Números da comunidade da usuária |
+| GET | `/comunidade/indicadores` | sim | qualquer perfil | Números da comunidade da usuária (nome antigo: `/dashboard/comunidade`, ainda funciona) |
+| GET | `/calendario` | não | todos | Todas as espécies; com `?mes=1..12`, o que plantar e colher no mês |
 | GET | `/calendario/:especie` | não | todos | Época de plantio e colheita de uma espécie |
 
 Todas as requisições e respostas usam JSON (`Content-Type: application/json`). Erros sempre vêm no formato:
@@ -676,32 +677,65 @@ Só `COORDENADORA`. Agricultoras da comunidade dela, com totais:
 
 Só `COORDENADORA`. Todos os plantios da comunidade, cada um com `agricultora: { id, nome }`. É a base da tela de estoque.
 
-### `GET /dashboard/comunidade`
+### `GET /comunidade/indicadores`
 
-Qualquer perfil logado. Números da comunidade de quem está logada:
+Qualquer perfil logado. Números da comunidade de quem está logada. O endereço antigo `GET /dashboard/comunidade` continua funcionando e devolve o mesmo.
 
 ```json
 {
   "comunidade": { "id": 1, "nome": "Comunidade 1" },
-  "areaTotal": 170.5,
-  "agricultorasAtivas": 2,
-  "especies": [{ "especie": "Milho", "area": 40, "quantidade": 1 }]
+  "areaTotal": 23,
+  "agricultorasAtivas": 1,
+  "totalEspecies": 2,
+  "especies": [
+    { "especie": "Milho", "area": 15, "quantidade": 2 },
+    { "especie": "Feijão", "area": 8, "quantidade": 1 }
+  ]
 }
 ```
+
+`especies` vem ordenada pela maior área. Comunidade sem plantios devolve zeros e lista vazia. As somas e contagens são feitas pelo banco (`aggregate`, `groupBy` e `count` do Prisma).
 
 Rotas da responsável sem comunidade ligada: `404 Você ainda não está ligada a nenhuma comunidade.`
 
 ---
 
-## Calendário (`/calendario/:especie`)
+## Calendário (`/calendario`)
 
-Público. Época de plantio e de colheita de uma espécie da tabela `CalendarioAgricola`:
+Público. Dados da tabela `CalendarioAgricola`, preenchida pelo seed (`prisma/calendarioReferencia.js`) a cada `npm run db:seed` e a cada deploy no Render. Cada espécie tem o texto da época (`epocaPlantio`, `epocaColheita`) e os meses em número, de 1 a 12 (`mesesPlantio`, `mesesColheita`), usados no filtro e no alerta de época.
+
+> ⚠️ Os meses atuais são de referência e precisam ser validados com a pesquisa de campo. Para ajustar, edite `prisma/calendarioReferencia.js` e rode `npm run db:seed` de novo (o seed atualiza sem duplicar).
+
+### `GET /calendario`
+
+Lista todas as espécies, em ordem alfabética:
 
 ```json
-{ "id": 1, "especie": "Milho", "epocaPlantio": "set–nov", "epocaColheita": "fev–mar" }
+[
+  {
+    "id": 1,
+    "especie": "Milho",
+    "epocaPlantio": "Dezembro a fevereiro",
+    "mesesPlantio": [12, 1, 2],
+    "epocaColheita": "Março a junho",
+    "mesesColheita": [3, 4, 5, 6]
+  }
+]
 ```
 
-Espécie que não está na tabela: `404 Calendário não encontrado para a espécie informada.` A tabela ainda não tem seed; o calendário de cada plantio no app usa o ciclo das espécies guardado no front.
+### `GET /calendario?mes=3`
+
+O que plantar e colher no mês (1 a 12):
+
+```json
+{ "mes": 3, "plantar": ["Feijão", "Mandioca"], "colher": ["Abóbora", "Mandioca", "Milho"] }
+```
+
+Mês inválido (fora de 1 a 12 ou que não é número): `400 O mês deve ser um número de 1 a 12.`
+
+### `GET /calendario/:especie`
+
+Uma espécie, no mesmo formato de cada item da lista acima. O nome precisa ser igual ao do seed (ex.: `Milho`, `Feijão`, `Abóbora`). Espécie que não está na tabela: `404 Calendário não encontrado para a espécie informada.`
 
 ---
 
