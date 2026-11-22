@@ -37,6 +37,10 @@ async function listar(agricultoraId, query) {
   return prisma.plantio.findMany({ where, orderBy: { dataPlantio: 'desc' } });
 }
 
+async function buscarPorId(id, agricultoraId) {
+  return plantioDaAgricultora(id, agricultoraId);
+}
+
 async function editar(id, dados, agricultoraId) {
   const existente = await plantioDaAgricultora(id, agricultoraId);
   const data = validarPlantio(dados);
@@ -96,4 +100,4 @@ async function desfazerColheita(id, agricultoraId) {
   });
 }
 
-module.exports = { criar, listar, editar, excluir, registrarColheita, desfazerColheita };
+module.exports = { criar, listar, buscarPorId, editar, excluir, registrarColheita, desfazerColheita };

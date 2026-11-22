@@ -19,6 +19,14 @@ async function listar(req, res) {
   }
 }
 
+async function buscarPorId(req, res) {
+  try {
+    return res.status(200).json(await plantioService.buscarPorId(req.params.id, req.user.id));
+  } catch (error) {
+    return responderErro(res, error, 'Não foi possível carregar o plantio agora.');
+  }
+}
+
 async function editar(req, res) {
   try {
     return res.status(200).json(await plantioService.editar(req.params.id, req.body, req.user.id));
@@ -54,4 +62,4 @@ async function desfazerColheita(req, res) {
   }
 }
 
-module.exports = { criar, listar, editar, excluir, registrarColheita, desfazerColheita };
+module.exports = { criar, listar, buscarPorId, editar, excluir, registrarColheita, desfazerColheita };

@@ -10,6 +10,7 @@ const router = express.Router();
 router.use(autenticar, soAgricultora);
 router.post('/', plantioController.criar);
 router.get('/', plantioController.listar);
+router.get('/:id', plantioController.buscarPorId);
 router.put('/:id', plantioController.editar);
 router.delete('/:id', plantioController.excluir);
 router.put('/:id/colheita', plantioController.registrarColheita);
