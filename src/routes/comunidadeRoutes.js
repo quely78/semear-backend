@@ -22,6 +22,8 @@ router.post(
 router.get('/coordenadora/financas', ...responsavel, financasController.daComunidade);
 
 // Qualquer usuária logada: números da própria comunidade
+router.get('/comunidade/indicadores', autenticar, comunidadeController.painel);
+// Nome antigo, mantido para o front atual continuar funcionando
 router.get('/dashboard/comunidade', autenticar, comunidadeController.painel);
 
 module.exports = router;

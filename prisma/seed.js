@@ -1,4 +1,7 @@
+require('dotenv').config();
+
 const { PrismaClient } = require('@prisma/client');
+const calendario = require('./calendarioReferencia');
 
 const prisma = new PrismaClient();
 
@@ -16,13 +19,23 @@ async function main() {
       create: comunidade,
     });
   }
-
   console.log(`Comunidades disponíveis: ${comunidades.length}`);
+
+  // upsert por espécie: pode rodar quantas vezes quiser (inclusive a cada deploy no Render)
+  // sem duplicar nada, e atualiza se os meses mudarem.
+  for (const item of calendario) {
+    await prisma.calendarioAgricola.upsert({
+      where: { especie: item.especie },
+      update: item,
+      create: item,
+    });
+  }
+  console.log(`Espécies no calendário: ${calendario.length}`);
 }
 
 main()
   .catch((error) => {
-    console.error('Não foi possível inicializar as comunidades.', error);
+    console.error('Não foi possível inicializar os dados.', error);
     process.exitCode = 1;
   })
   .finally(async () => {
