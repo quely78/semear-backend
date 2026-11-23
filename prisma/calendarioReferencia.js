@@ -9,6 +9,8 @@
 //
 // O nome da espécie precisa ser IGUAL ao do front (src/config/dados.js).
 // mesesPlantio e mesesColheita: números de 1 (janeiro) a 12 (dezembro).
+// Para mostrar alerta e ciclo no front, a espécie também deve existir em
+// frontend/src/config/dados.js e frontend/src/config/ciclos.js.
 // =============================================================
 
 module.exports = [
