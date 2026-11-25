@@ -8,6 +8,7 @@
 //   DELETE /plantios/:id    → exclui
 // =============================================================
 import { requisicao } from './api';
+import { enviarOuGuardar } from './filaOffline';
 
 /**
  * Lista os plantios da agricultora logada.
@@ -31,8 +32,16 @@ export function buscarPlantio(id) {
 }
 
 /** Cria um plantio. dados = { especie, dataPlantio, area, tipoCultivo } */
+/**
+ * Cria um plantio. Sem internet, fica guardado no celular e é enviado depois:
+ * nesse caso devolve { pendente: true }.
+ */
 export function criarPlantio(dados) {
-  return requisicao('/plantios', { method: 'POST', body: dados });
+  return enviarOuGuardar('/plantios', {
+    method: 'POST',
+    body: dados,
+    descricao: `Plantio de ${dados.especie} (${dados.area} m²)`,
+  });
 }
 
 /** Edita um plantio existente. */

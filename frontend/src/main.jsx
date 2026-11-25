@@ -9,6 +9,11 @@ import { AuthProvider } from './context/AuthContext';
 // Estilos globais (cores, fontes e componentes da identidade visual)
 import './styles/global.css';
 
+// Uso sem internet: só na versão publicada (no "npm run dev" atrapalharia as atualizações)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {/* BrowserRouter: permite trocar de tela pela URL (/login, /plantios...) */}

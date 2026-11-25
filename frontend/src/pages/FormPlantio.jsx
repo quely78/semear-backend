@@ -142,10 +142,12 @@ export default function FormPlantio() {
 
     setSalvando(true);
     try {
-      if (editando) await editarPlantio(id, dados);
-      else await criarPlantio(dados);
+      const resposta = editando ? await editarPlantio(id, dados) : await criarPlantio(dados);
       // Sucesso: volta para a lista mostrando a confirmação
-      navegar('/plantios', { replace: true, state: { mensagem: 'Plantio salvo com sucesso' } });
+      const mensagem = resposta?.pendente
+        ? 'Sem internet: o plantio ficou guardado no celular e será enviado quando a conexão voltar.'
+        : 'Plantio salvo com sucesso';
+      navegar('/plantios', { replace: true, state: { mensagem } });
     } catch (erro) {
       // Erro vindo da API: se ela apontar o campo, o erro aparece embaixo dele
       if (erro.campos) {

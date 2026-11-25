@@ -1,0 +1,13 @@
+{
+  "name": "SemeAR",
+  "short_name": "SemeAR",
+  "description": "O registro do plantio, feito por elas.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4ecdd",
+  "theme_color": "#355e3b",
+  "icons": [
+    { "src": "/icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
