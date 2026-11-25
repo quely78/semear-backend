@@ -34,7 +34,16 @@ async function listar(agricultoraId, query) {
     if (filtros.dataFim) where.dataPlantio.lte = filtros.dataFim;
   }
 
-  return prisma.plantio.findMany({ where, orderBy: { dataPlantio: 'desc' } });
+  const plantios = await prisma.plantio.findMany({
+    where,
+    orderBy: { dataPlantio: 'desc' },
+    include: { vendas: { select: { quantidadeKg: true } } },
+  });
+  // kgVendidos: o que já saiu do estoque colhido (colhido − vendido = no estoque)
+  return plantios.map(({ vendas, ...plantio }) => ({
+    ...plantio,
+    kgVendidos: vendas.reduce((soma, v) => soma + v.quantidadeKg, 0),
+  }));
 }
 
 async function buscarPorId(id, agricultoraId) {

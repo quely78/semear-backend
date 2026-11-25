@@ -51,7 +51,11 @@ async function plantiosDaComunidade(usuario) {
   const comunidade = await comunidadeDaUsuaria(usuario);
   const plantios = await prisma.plantio.findMany({
     where: { agricultora: { comunidadeId: comunidade.id } },
-    include: { agricultora: { select: { id: true, nome: true } } },
+    include: {
+      agricultora: { select: { id: true, nome: true } },
+      // Vendas = saída do estoque colhido. Só data e kg: o dinheiro fica com a agricultora.
+      vendas: { select: { data: true, quantidadeKg: true }, orderBy: { data: 'desc' } },
+    },
     orderBy: { dataPlantio: 'desc' },
   });
   return { comunidade, plantios };
