@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:epoca": "node --test src/utils/epocaPlantio.test.js",
     "lint": "eslint ."
   },
   "dependencies": {

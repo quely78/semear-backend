@@ -20,6 +20,39 @@ O `db:seed` cadastra somente as comunidades iniciais. Não é necessário manter
 agricultora fixa para testes: a suíte automatizada cria agricultoras temporárias e
 remove os registros ao terminar.
 
+## Alerta da época de plantio
+
+Na tela do calendário de um plantio, a espécie é consultada em
+`GET /calendario/:especie`. O mês da `dataPlantio` é comparado com a lista
+`mesesPlantio` retornada pelo calendário.
+
+- Dentro da época recomendada: aparece uma mensagem de sucesso.
+- Fora da época recomendada: aparece um alerta com a época ideal da espécie.
+- Para espécie ou calendário não encontrado: o alerta é omitido, sem impedir a
+  abertura do restante da tela.
+- Para espécies informadas em "Outra espécie", o alerta só aparecerá depois que
+  a espécie for cadastrada no calendário e tiver seu ciclo informado no front-end.
+
+Teste manual:
+
+1. Cadastre um plantio de **Milho** em janeiro e abra seu calendário.
+2. Confirme que aparece a mensagem de plantio dentro da época ideal.
+3. Altere o plantio para julho e confirme o alerta fora da época ideal.
+4. Repita com outra espécie, como Feijão, usando os meses do seed.
+5. Cadastre uma espécie fora da lista oficial, como Cupuaçu, e confirme que a tela
+   continua aberta sem alerta nem ciclo cadastrado.
+
+Arquivos relacionados ao alerta:
+
+- [`frontend/src/services/calendarioService.js`](frontend/src/services/calendarioService.js):
+  consulta o calendário e compara o mês do plantio com `mesesPlantio`.
+- [`frontend/src/pages/CalendarioPlantio.jsx`](frontend/src/pages/CalendarioPlantio.jsx):
+  chama o serviço e exibe o aviso na tela do calendário.
+- [`prisma/calendarioReferencia.js`](prisma/calendarioReferencia.js): cadastro das
+  espécies, épocas e meses usados pelo seed.
+- [`frontend/src/config/ciclos.js`](frontend/src/config/ciclos.js): etapas do ciclo
+  exibidas no calendário de cada espécie conhecida.
+
 ## Branches e commits
 
 Cada tarefa deve ser desenvolvida em uma branch própria, criada a partir de `main`, usando o prefixo correspondente:
@@ -40,17 +73,43 @@ Após testar localmente, abra um Pull Request para `main`. O merge na `main` dis
 
 ## Testes automatizados
 
+### Back-end
+
 Com o Docker Desktop aberto e o PostgreSQL local em execução, rode na raiz do back-end:
 
 ```powershell
 npm test
 ```
 
-Os testes ficam em [`tests/plantios.test.js`](tests/plantios.test.js) e usam Jest
-com Supertest para testar a API sem abrir o navegador. A suíte cobre criação,
+Os testes do back-end ficam em [`tests/plantios.test.js`](tests/plantios.test.js) e usam
+Jest com Supertest para testar a API sem abrir o navegador. A suíte cobre criação,
 listagem, busca por ID, edição, exclusão, autenticação, ID inexistente e tentativa
-de acesso ao plantio de outra agricultora. Os dados criados para os testes são
+de acesso ao plantio de outra agricultora. Os dados criados pelos testes são
 temporários e removidos ao final.
+
+Resultado esperado: `Test Suites: 1 passed` e `Tests: 9 passed`.
+
+### Alerta de época no front-end
+
+Pode usar o mesmo terminal ou abrir outro. Na raiz do projeto:
+
+```powershell
+cd frontend
+npm run test:epoca
+npm run build
+```
+
+Os testes ficam em
+[`frontend/src/utils/epocaPlantio.test.js`](frontend/src/utils/epocaPlantio.test.js)
+e usam `node:test`, sem Docker, banco ou navegador. Eles verificam:
+
+- Plantio dentro da época ideal;
+- Plantio fora da época ideal;
+- Espécie sem calendário;
+- Plantio sem data.
+
+`npm run test:epoca` deve terminar com `pass 4`.
+`npm run build` gera a versão final na pasta `frontend/dist` e deve terminar sem erros.
 
 ### Mudanças no banco (migrations)
 

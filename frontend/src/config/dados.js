@@ -12,6 +12,8 @@
 // em Rio Preto da Eva (plano de investigação).
 // O nome precisa ser IGUAL ao cadastrado na tabela CalendarioAgricola
 // para que a consulta do calendário funcione.
+// Ao adicionar uma espécie aqui, também cadastre seus meses em
+// prisma/calendarioReferencia.js e seu ciclo em config/ciclos.js.
 // -------------------------------------------------------------
 export const ESPECIES = ['Milho', 'Mandioca', 'Feijão', 'Abóbora'];
 
