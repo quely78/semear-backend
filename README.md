@@ -853,7 +853,9 @@ Rotas da responsável sem comunidade ligada: `404 Você ainda não está ligada 
 
 ## Calendário (`/calendario`)
 
-Público. Dados da tabela `CalendarioAgricola`, preenchida pelo seed (`prisma/calendarioReferencia.js`) a cada `npm run db:seed` e a cada deploy no Render. Cada espécie tem o texto da época (`epocaPlantio`, `epocaColheita`) e os meses em número, de 1 a 12 (`mesesPlantio`, `mesesColheita`), usados no filtro e no alerta de época.
+**Público, por decisão da equipe (Sprint 3, 25/11/2026):** as rotas do calendário não pedem login. Elas só têm informação de referência agrícola (épocas e meses de plantio e colheita por espécie), nenhum dado de pessoa, e são úteis antes do cadastro. Tudo o que é da agricultora (plantios, colheitas, gastos e vendas) continua exigindo login.
+
+Dados da tabela `CalendarioAgricola`, preenchida pelo seed (`prisma/calendarioReferencia.js`) a cada `npm run db:seed` e a cada deploy no Render. Cada espécie tem o texto da época (`epocaPlantio`, `epocaColheita`) e os meses em número, de 1 a 12 (`mesesPlantio`, `mesesColheita`), usados no filtro e no alerta de época.
 
 > ⚠️ Os meses atuais são de referência e precisam ser validados com a pesquisa de campo. Para ajustar, edite `prisma/calendarioReferencia.js` e rode `npm run db:seed` de novo (o seed atualiza sem duplicar).
 
