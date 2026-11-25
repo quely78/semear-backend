@@ -94,7 +94,13 @@ export default function Perfil() {
   }
 
   return (
-    <Layout cabecalho={{ voltarPara: inicio, rotuloVoltar: 'Início' }}>
+    <Layout
+      cabecalho={{
+        voltarPara: inicio,
+        // O botão diz para onde leva: a tela inicial de cada perfil
+        rotuloVoltar: usuario?.tipo === 'COORDENADORA' ? 'Início' : 'Meus plantios',
+      }}
+    >
       <h1 className="titulo">Meu perfil</h1>
 
       {carregando && <Carregando texto="Carregando seu perfil..." />}

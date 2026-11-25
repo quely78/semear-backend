@@ -7,7 +7,7 @@
 // =============================================================
 import { Link } from 'react-router-dom';
 import { hoje } from '../utils/datas';
-import { formatarKg, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
+import { formatarKg, kgEmEstoqueDo, kgVendidosDo, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 export default function PlantioCard({ plantio, voltar }) {
@@ -37,7 +37,9 @@ export default function PlantioCard({ plantio, voltar }) {
         {situacao !== 'crescendo' && (
           <span className={`selo selo--${situacao} plantio-card__selo`}>
             {situacao === 'colhido'
-              ? `Colhido · ${formatarKg(plantio.quantidadeColhida)}`
+              ? kgVendidosDo(plantio) > 0
+                ? `Colhido ${formatarKg(plantio.quantidadeColhida)} · ${formatarKg(kgEmEstoqueDo(plantio))} no estoque`
+                : `Colhido · ${formatarKg(plantio.quantidadeColhida)}`
               : SITUACOES[situacao].rotulo}
           </span>
         )}

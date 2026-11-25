@@ -10,6 +10,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import Aviso from '../components/Aviso';
 import Campo from '../components/Campo';
 import Carregando from '../components/Carregando';
+import GraficoBarrasH from '../components/graficos/GraficoBarrasH';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import useFinancasDoPlantio from '../hooks/useFinancasDoPlantio';
@@ -23,8 +24,7 @@ import {
   rotuloCategoria,
 } from '../utils/dinheiro';
 import { formatarData } from '../utils/formatadores';
-
-const corDa = (categoria) => CATEGORIAS_GASTO.find((c) => c.valor === categoria)?.cor;
+import { COR } from '../utils/graficos';
 
 export default function GastosPlantio() {
   const { id } = useParams();
@@ -170,23 +170,20 @@ export default function GastosPlantio() {
           <p className="texto-apoio">Nenhum gasto anotado neste plantio ainda.</p>
         ) : (
           <>
-            <div
-              className="estoque-barra financas__barra"
-              role="img"
-              aria-label={porCategoria.map((c) => `${c.rotulo} ${formatarReais(c.total)}`).join(', ')}
-            >
-              {porCategoria.map((c) => (
-                <span
-                  key={c.valor}
-                  className="estoque-barra__parte"
-                  style={{ width: `${(c.total / resumo.gastos) * 100}%`, background: c.cor }}
-                />
-              ))}
-            </div>
+            <GraficoBarrasH
+              titulo="Gastos por categoria"
+              itens={porCategoria
+                .slice()
+                .sort((x, y) => y.total - x.total)
+                .map((c) => ({ nome: c.rotulo, valor: c.total, detalhe: `${Math.round((c.total / resumo.gastos) * 100)}% dos gastos` }))}
+              formatar={formatarReais}
+              formatarEixo={(v) => `R$ ${v}`}
+              cor={COR.secundaria}
+              nomeValor="Gasto"
+            />
             <ul className="financas__lista">
               {gastos.map((g) => (
                 <li key={g.id} className="financas__item">
-                  <span className="financas__cor" style={{ background: corDa(g.categoria) }} aria-hidden="true" />
                   <div className="financas__item-texto">
                     <p className="financas__item-titulo">{rotuloCategoria(g.categoria)}</p>
                     <p className="texto-apoio">

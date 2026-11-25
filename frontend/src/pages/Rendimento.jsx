@@ -10,11 +10,15 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Aviso from '../components/Aviso';
 import Carregando from '../components/Carregando';
+import CartaoGrafico from '../components/graficos/CartaoGrafico';
+import GraficoBarrasH from '../components/graficos/GraficoBarrasH';
+import Indicador from '../components/graficos/Indicador';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import SeletorAno, { anoAtual, periodoDoAno } from '../components/SeletorAno';
 import { buscarResumoDaAgricultora } from '../services/financasService';
 import { formatarMargem, formatarReais } from '../utils/dinheiro';
+import { formatarKg } from '../utils/estoque';
 import { formatarArea } from '../utils/formatadores';
 
 /** Plantios → uma linha por espécie, da que mais rende por m² para a que menos rende. */
@@ -70,14 +74,13 @@ export default function Rendimento() {
   }, [ano]);
 
   const linhas = dados ? porEspecie(dados.plantios) : [];
-  const maiorLucroM2 = Math.max(...linhas.map((l) => l.lucroPorM2), 0);
   const frase = conclusao(linhas);
+  const total = dados?.total;
 
   return (
     <Layout cabecalho={{ voltarPara: '/plantios', rotuloVoltar: 'Meus plantios' }}>
       <div>
         <h1 className="titulo">Qual plantio rende mais?</h1>
-        <p className="texto-apoio">Quanto sobrou em cada m² plantado</p>
       </div>
 
       <SeletorAno valor={ano} aoMudar={setAno} />
@@ -94,34 +97,38 @@ export default function Rendimento() {
         </section>
       ) : (
         <>
-          <section className="cartao">
-            <h2 className="subtitulo">Lucro por m²</h2>
-            <ul className="barras">
-              {linhas.map((l) => (
-                <li key={l.especie} className="barras__item">
-                  <div className="barras__rotulos">
-                    <span>{l.especie}</span>
-                    <strong className={l.lucroPorM2 < 0 ? 'financas__negativo' : ''}>
-                      {formatarReais(l.lucroPorM2)}/m²
-                    </strong>
-                  </div>
-                  <div className="grafico__trilho">
-                    <div
-                      className="grafico__barra barras__barra"
-                      style={{ width: maiorLucroM2 > 0 ? `${Math.max((l.lucroPorM2 / maiorLucroM2) * 100, 0)}%` : 0 }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <div className="painel-indicadores">
+            <Indicador rotulo="Vendido" valor={formatarReais(total.receita)} detalhe={`${formatarKg(total.kgVendidos)} vendidos`} />
+            <Indicador rotulo="Gasto" valor={formatarReais(total.gastos)} detalhe={`em ${dados.plantios.length} ${dados.plantios.length === 1 ? 'plantio' : 'plantios'}`} />
+            <Indicador
+              rotulo={total.lucro >= 0 ? 'Sobrou' : 'Faltou'}
+              valor={formatarReais(Math.abs(total.lucro))}
+              alerta={total.lucro < 0}
+              detalhe="vendido − gasto"
+            />
+            <Indicador rotulo="Margem média" valor={formatarMargem(total.margem)} detalhe={total.precoMedioKg ? `preço médio ${formatarReais(total.precoMedioKg)}/kg` : 'sem vendas'} />
+          </div>
+
+          <CartaoGrafico titulo="Lucro por m²" sub="quanto sobrou em cada m² plantado · abaixo de zero = prejuízo" exportavel>
+            <GraficoBarrasH
+              titulo="Lucro por metro quadrado, por espécie"
+              itens={linhas.map((l) => ({
+                nome: l.especie,
+                valor: Math.round(l.lucroPorM2 * 100) / 100,
+                detalhe: `${formatarReais(l.lucro)} em ${formatarArea(l.area)}`,
+              }))}
+              formatar={(v) => `${formatarReais(v)}/m²`}
+              formatarEixo={(v) => `R$ ${v.toLocaleString('pt-BR')}`}
+              nomeValor="Lucro por m²"
+            />
+          </CartaoGrafico>
 
           {frase && <p className="financas__destaque">{frase}</p>}
 
-          <section className="cartao">
-            <h2 className="subtitulo">Detalhe de cada espécie</h2>
+          <section className="cartao painel-cartao">
+            <h2 className="painel-cartao__titulo">Detalhe de cada espécie</h2>
             <div className="tabela-envoltorio">
-              <table className="tabela">
+              <table className="tabela tabela--compacta">
                 <thead>
                   <tr>
                     <th scope="col">Espécie</th>

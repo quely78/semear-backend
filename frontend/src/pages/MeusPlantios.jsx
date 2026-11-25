@@ -160,12 +160,6 @@ export default function MeusPlantios() {
               <span className="legenda-cultivo__item">Convencional</span>
             </p>
           </div>
-          <p className="texto-apoio">
-            Toque em um plantio para ver o calendário e o dinheiro dele.
-          </p>
-          <Link to="/plantios/rendimento" className="botao botao--secundario">
-            <Icone nome="grafico" tamanho={18} /> Qual plantio rende mais?
-          </Link>
           <ul className="lista">
             {plantios.map((plantio) => (
               <li key={plantio.id}>
@@ -173,6 +167,9 @@ export default function MeusPlantios() {
               </li>
             ))}
           </ul>
+          <Link to="/plantios/rendimento" className="botao botao--secundario">
+            <Icone nome="dinheiro" tamanho={26} /> Qual plantio rende mais?
+          </Link>
         </>
       )}
     </Layout>

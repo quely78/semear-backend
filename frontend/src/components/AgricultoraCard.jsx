@@ -2,7 +2,7 @@
 // components/AgricultoraCard.jsx — Cartão de uma agricultora
 // na lista da responsável pela comunidade.
 //   [MS]  Maria Souza                              ›
-//         3 plantios · 80 m² · 40 m² no campo
+//         3 plantios · 80 m² plantados · 40 m² no campo
 //         92 99999-0000
 // Tocar no cartão abre o estoque filtrado por essa agricultora.
 // =============================================================
@@ -38,10 +38,15 @@ export default function AgricultoraCard({ agricultora }) {
       <div>
         <p className="agricultora-card__nome">{agricultora.nome}</p>
         <p className="agricultora-card__detalhe">
-          {total
-            ? `${total} ${total === 1 ? 'plantio' : 'plantios'} · ${formatarArea(agricultora.areaTotal)}`
-            : 'Nenhum plantio registrado'}
-          {emCampo > 0 && ` · ${formatarArea(emCampo)} no campo`}
+          {total ? (
+            <>
+              {total} {total === 1 ? 'plantio' : 'plantios'} · {formatarArea(agricultora.areaTotal)} plantados
+              {emCampo > 0 &&
+                (emCampo >= Number(agricultora.areaTotal) ? ' · tudo no campo' : ` · ${formatarArea(emCampo)} no campo`)}
+            </>
+          ) : (
+            'Nenhum plantio registrado'
+          )}
         </p>
         {agricultora.contato && (
           <p className="agricultora-card__contato">{agricultora.contato}</p>

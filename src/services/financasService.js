@@ -153,10 +153,13 @@ async function resumoDaComunidade(usuario, query) {
   const doPlantio = { plantio: { select: { especie: true, agricultoraId: true } } };
 
   const [gastos, vendas, totalAgricultoras] = await Promise.all([
-    prisma.gasto.findMany({ where: { ...daComunidade, data }, select: { valor: true, ...doPlantio } }),
+    prisma.gasto.findMany({
+      where: { ...daComunidade, data },
+      select: { valor: true, data: true, ...doPlantio },
+    }),
     prisma.venda.findMany({
       where: { ...daComunidade, data },
-      select: { quantidadeKg: true, precoKg: true, canal: true, ...doPlantio },
+      select: { quantidadeKg: true, precoKg: true, canal: true, data: true, ...doPlantio },
     }),
     prisma.agricultora.count({ where: { comunidadeId: comunidade.id } }),
   ]);
@@ -173,9 +176,22 @@ async function resumoDaComunidade(usuario, query) {
   gastos.forEach((g) => linha(g.plantio.especie).gastos.push(g));
   vendas.forEach((v) => linha(v.plantio.especie).vendas.push(v));
 
+  // Por mês ("AAAA-MM"): receita, gastos, lucro e margem (para os gráficos de linha do tempo)
+  const porMes = {};
+  const doMes = (registro) => (porMes[registro.data.toISOString().slice(0, 7)] ||= { gastos: [], vendas: [] });
+  gastos.forEach((g) => doMes(g).gastos.push(g));
+  vendas.forEach((v) => doMes(v).vendas.push(v));
+  const meses = Object.entries(porMes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([mes, dados]) => {
+      const r = resumir(dados);
+      return { mes, receita: r.receita, gastos: r.gastos, lucro: r.lucro, margem: r.margem, kgVendidos: r.kgVendidos };
+    });
+
   return {
     comunidade,
     periodo,
+    meses,
     total: resumir({ gastos, vendas }),
     agricultorasComVendas: new Set(vendas.map((v) => v.plantio.agricultoraId)).size,
     totalAgricultoras,

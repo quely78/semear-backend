@@ -20,6 +20,7 @@ import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import RegistroColheita from '../components/RegistroColheita';
 import { CATEGORIAS, CICLOS, epocaDoMes } from '../config/ciclos';
+import { diaParaSelecionar, montarPeriodos } from '../utils/periodosPlantio';
 import { buscarPrevisaoChuva } from '../services/climaService';
 import { buscarCalendarioDaEspecie } from '../services/calendarioService';
 import { buscarPlantio } from '../services/plantioService';
@@ -30,58 +31,20 @@ import {
   hoje as calcularHoje,
   nomeMes,
   partes,
-  somarDias,
   textoPeriodo,
 } from '../utils/datas';
-import { formatarKg } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
-/** Monta todos os períodos do plantio (ciclo + chuva), em ordem de data. */
-function montarPeriodos(plantio, previsao) {
-  const dataPlantio = deIso(plantio.dataPlantio);
-
-  const etapas = (CICLOS[plantio.especie] || []).map((etapa) => ({
-    categoria: etapa.categoria,
-    nome: etapa.nome,
-    inicio: somarDias(dataPlantio, etapa.de),
-    fim: somarDias(dataPlantio, etapa.ate),
-    dica: etapa.dica,
-  }));
-
-  const chuvas = (previsao?.periodos || []).map((p) => ({
-    categoria: 'chuva',
-    nome: 'Chuva prevista',
-    inicio: p.inicio,
-    fim: p.fim,
-    dica: `Cerca de ${Math.round(p.mm)} mm de chuva no período.`,
-  }));
-
-  // Colheita já registrada: aparece como um dia marcado no calendário
-  const colhido = plantio.dataColheita
-    ? [
-        {
-          categoria: 'colheita',
-          nome: 'Colhido',
-          inicio: deIso(plantio.dataColheita),
-          fim: deIso(plantio.dataColheita),
-          dica: `Você colheu ${formatarKg(plantio.quantidadeColhida)}.`,
-        },
-      ]
-    : [];
-
-  return [
-    { categoria: 'plantio', nome: 'Plantio', inicio: dataPlantio, fim: dataPlantio, dica: 'Dia em que você plantou.' },
-    ...etapas,
-    ...colhido,
-    ...chuvas,
-  ].sort((a, b) => a.inicio.localeCompare(b.inicio));
-}
-
-/** Mês que abre primeiro: o de hoje (se o plantio está no ciclo) ou o do plantio. */
-function mesInicial(periodos, hoje) {
-  const inicio = periodos[0]?.inicio || hoje;
-  const fim = periodos.reduce((maior, p) => (p.fim > maior ? p.fim : maior), inicio);
-  const referencia = hoje >= inicio && hoje <= fim ? hoje : inicio;
+/**
+ * Mês que abre primeiro: o de hoje (se o plantio ainda está no ciclo);
+ * se já foi colhido, o mês da colheita; senão, o mês do plantio.
+ */
+function mesInicial(plantio, periodos, hoje) {
+  const doPlantio = periodos.filter((p) => p.categoria !== 'chuva');
+  const inicio = doPlantio[0]?.inicio || hoje;
+  const fim = doPlantio.reduce((maior, p) => (p.fim > maior ? p.fim : maior), inicio);
+  const colheita = plantio.dataColheita ? deIso(plantio.dataColheita) : null;
+  const referencia = hoje >= inicio && hoje <= fim ? hoje : colheita || inicio;
   const { ano, mes } = partes(referencia);
   return { ano, mes };
 }
@@ -105,7 +68,7 @@ export default function CalendarioPlantio() {
   const [buscandoPrevisao, setBuscandoPrevisao] = useState(true);
 
   const [mesVisivel, setMesVisivel] = useState(null); // { ano, mes }
-  const [selecionado, setSelecionado] = useState(hoje);
+  const [selecionado, setSelecionado] = useState(null);
 
   // Plantio: se não veio da lista (ex.: página recarregada), busca na API
   useEffect(() => {
@@ -146,13 +109,17 @@ export default function CalendarioPlantio() {
   }, [plantio?.especie, plantio?.dataPlantio]);
 
   const periodos = useMemo(
-    () => (plantio ? montarPeriodos(plantio, previsao) : []),
+    () => (plantio ? montarPeriodos([plantio], previsao) : []),
     [plantio, previsao],
   );
 
-  // Abre no mês certo assim que o plantio chega
+  // Abre no mês certo assim que o plantio chega (e escolhe um dia que está na tela)
   useEffect(() => {
-    if (plantio && !mesVisivel) setMesVisivel(mesInicial(periodos, hoje));
+    if (plantio && !mesVisivel) {
+      const inicial = mesInicial(plantio, periodos, hoje);
+      setMesVisivel(inicial);
+      setSelecionado(diaParaSelecionar(inicial.ano, inicial.mes, periodos, hoje));
+    }
   }, [plantio, periodos, mesVisivel, hoje]);
 
   if (carregando || (plantio && !mesVisivel)) {
@@ -182,7 +149,9 @@ export default function CalendarioPlantio() {
   /** Vai para o mês anterior (-1) ou o próximo (+1). */
   function mudarMes(passo) {
     const novo = new Date(Date.UTC(ano, mes + passo, 1));
-    setMesVisivel({ ano: novo.getUTCFullYear(), mes: novo.getUTCMonth() });
+    const proximo = { ano: novo.getUTCFullYear(), mes: novo.getUTCMonth() };
+    setMesVisivel(proximo);
+    setSelecionado(diaParaSelecionar(proximo.ano, proximo.mes, periodos, hoje));
   }
 
   function irParaHoje() {
@@ -307,18 +276,15 @@ export default function CalendarioPlantio() {
         <Carregando texto="Buscando a previsão de chuva..." />
       ) : !previsao ? (
         <Aviso tipo="info">
-          Sem internet agora: não foi possível buscar a previsão de chuva. Mostrando só a época do
-          ano.
+          Não conseguimos buscar a previsão de chuva agora. Mostrando só a época do ano.
         </Aviso>
       ) : (
         previsao.desatualizada && (
-          <Aviso tipo="info">Sem internet agora: mostrando a última previsão de chuva salva.</Aviso>
+          <Aviso tipo="info">
+            Não conseguimos atualizar a previsão agora: mostrando a última previsão de chuva salva.
+          </Aviso>
         )
       )}
-      <p className="texto-apoio">
-        As etapas são uma estimativa pelo ciclo médio da espécie. A chuva vem da previsão do tempo
-        para Rio Preto da Eva (próximos 16 dias).
-      </p>
 
       <Link
         to={`/plantios/${plantio.id}/editar`}

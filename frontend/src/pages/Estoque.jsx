@@ -1,32 +1,33 @@
 // =============================================================
-// pages/Estoque.jsx — Controle dos plantios como um ESTOQUE.
-//   /coordenadora/estoque — só a responsável pela comunidade,
-//   com os plantios de todas as agricultoras (filtro por agricultora).
+// pages/Estoque.jsx — Estoque da comunidade (só a responsável).
+//   /coordenadora/estoque  (filtro por agricultora: ?agricultora=3)
 //
-//   ENTRADA = plantio (m² no campo)  ·  SAÍDA = colheita (kg colhidos)
+//   NO CAMPO (m²) → COLHEITA = entrada (kg) → VENDA = saída (kg)
+//   Em estoque = colhido − vendido
 //
-// Mostra: área no campo por situação, o que está pronto para colher,
-// os totais por espécie e o histórico de entradas e saídas.
+// Tela de consulta, sem gráficos (eles ficam no painel da Comunidade):
+// resumo em números, o que está pronto para colher, a tabela por
+// espécie e o registro de movimentos.
 // =============================================================
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Aviso from '../components/Aviso';
 import Carregando from '../components/Carregando';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import { listarPlantiosDaComunidade } from '../services/comunidadeService';
 import { diaEMes, hoje as calcularHoje } from '../utils/datas';
-import {
-  formatarKg,
-  janelaDeColheita,
-  resumirEstoque,
-  situacaoDoPlantio,
-  SITUACOES,
-} from '../utils/estoque';
+import { formatarKg, janelaDeColheita, resumirEstoque, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 // Quantos movimentos mostrar antes do botão "Ver mais"
-const MOVIMENTOS_POR_VEZ = 8;
+const MOVIMENTOS_POR_VEZ = 10;
+
+const TIPO = {
+  plantio: { rotulo: 'Plantio', classe: 'campo' },
+  entrada: { rotulo: 'Colheita', classe: 'entrada' },
+  saida: { rotulo: 'Venda', classe: 'saida' },
+};
 
 export default function Estoque() {
   const hoje = calcularHoje();
@@ -37,6 +38,9 @@ export default function Estoque() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [mostrarMovimentos, setMostrarMovimentos] = useState(MOVIMENTOS_POR_VEZ);
+  // Filtros da tabela de movimentos
+  const [tipoMovimento, setTipoMovimento] = useState(''); // '' | 'plantio' | 'entrada' | 'saida'
+  const [especieMovimento, setEspecieMovimento] = useState('');
 
   // Filtro por agricultora. Fica na URL: ?agricultora=3
   const filtroAgricultora = parametros.get('agricultora') || '';
@@ -51,7 +55,6 @@ export default function Estoque() {
       .finally(() => setCarregando(false));
   }, []);
 
-  // Agricultoras que aparecem nos plantios (para o filtro)
   const agricultoras = useMemo(() => {
     const mapa = new Map();
     plantios.forEach((p) => p.agricultora && mapa.set(p.agricultora.id, p.agricultora.nome));
@@ -68,24 +71,41 @@ export default function Estoque() {
     .filter((p) => ['pronto', 'atrasado'].includes(situacaoDoPlantio(p, hoje)))
     .sort((a, b) => a.dataPlantio.localeCompare(b.dataPlantio));
 
-  /** Largura de cada pedaço da barra (em %). */
-  const parte = (valor) => (noCampo ? `${(valor / noCampo) * 100}%` : '0%');
+  const especiesDosMovimentos = [...new Set(movimentos.map((m) => m.plantio.especie))].sort((a, b) =>
+    a.localeCompare(b, 'pt-BR'),
+  );
+  const movimentosFiltrados = movimentos.filter(
+    (m) => (!tipoMovimento || m.tipo === tipoMovimento) && (!especieMovimento || m.plantio.especie === especieMovimento),
+  );
+
+  /** Muda um filtro da tabela e volta para o começo da lista. */
+  const filtrarMovimentos = (mudar) => (valor) => {
+    setMostrarMovimentos(MOVIMENTOS_POR_VEZ);
+    mudar(valor);
+  };
 
   function mudarFiltro(valor) {
     setMostrarMovimentos(MOVIMENTOS_POR_VEZ);
     setParametros(valor ? { agricultora: valor } : {});
   }
 
+  const resumo = [
+    { rotulo: 'No campo', valor: formatarArea(noCampo) },
+    { rotulo: 'Colhido', valor: formatarKg(totais.colhidoKg) },
+    { rotulo: 'Vendido', valor: formatarKg(totais.vendidoKg) },
+    { rotulo: 'Em estoque', valor: formatarKg(totais.estoqueKg), destaque: true },
+  ];
+
   return (
     <Layout>
-      <div>
-        <p className="sobretitulo">
-          {comunidade?.nome || 'Minha comunidade'}
-        </p>
-        <h1 className="titulo">Estoque</h1>
-        <p className="texto-apoio">
-          Plantio é a entrada; colheita é a saída. Veja o que está no campo e o que já foi colhido.
-        </p>
+      <div className="linha-titulo">
+        <div>
+          <p className="sobretitulo">{comunidade?.nome || 'Minha comunidade'}</p>
+          <h1 className="titulo">Estoque</h1>
+        </div>
+        <Link to="/comunidade" className="botao-texto">
+          <Icone nome="grafico" tamanho={18} /> Gráficos
+        </Link>
       </div>
 
       {agricultoras.length > 0 && (
@@ -118,47 +138,16 @@ export default function Estoque() {
       ) : (
         !erro && (
           <>
-            {/* Visão geral: o que está no campo + o que já saiu */}
-            <section className="cartao estoque-geral" aria-label="Resumo do estoque">
-              <p className="estoque-geral__rotulo">No campo agora</p>
-              <p className="estoque-geral__valor">{formatarArea(noCampo)}</p>
+            {/* Resumo: uma linha de números, sem enfeite */}
+            <dl className="resumo-tecnico">
+              {resumo.map((item) => (
+                <div key={item.rotulo} className={item.destaque ? 'resumo-tecnico__item--destaque' : ''}>
+                  <dt>{item.rotulo}</dt>
+                  <dd>{item.valor}</dd>
+                </div>
+              ))}
+            </dl>
 
-              <div className="estoque-barra" aria-hidden="true">
-                <span className="estoque-barra__parte estoque-barra__parte--crescendo" style={{ width: parte(totais.crescendo) }} />
-                <span className="estoque-barra__parte estoque-barra__parte--pronto" style={{ width: parte(totais.pronto) }} />
-                <span className="estoque-barra__parte estoque-barra__parte--atrasado" style={{ width: parte(totais.atrasado) }} />
-              </div>
-
-              <ul className="estoque-linhas">
-                <li>
-                  <span className="estoque-marca estoque-marca--crescendo" aria-hidden="true" />
-                  {SITUACOES.crescendo.rotulo}
-                  <strong>{formatarArea(totais.crescendo)}</strong>
-                </li>
-                <li>
-                  <span className="estoque-marca estoque-marca--pronto" aria-hidden="true" />
-                  {SITUACOES.pronto.rotulo}
-                  <strong>{formatarArea(totais.pronto)}</strong>
-                </li>
-                {totais.atrasado > 0 && (
-                  <li>
-                    <span className="estoque-marca estoque-marca--atrasado" aria-hidden="true" />
-                    {SITUACOES.atrasado.rotulo}
-                    <strong>{formatarArea(totais.atrasado)}</strong>
-                  </li>
-                )}
-                <li className="estoque-linhas__saida">
-                  <Icone nome="cesta" tamanho={18} />
-                  Já colhido
-                  <strong>
-                    {formatarKg(totais.colhidoKg)}
-                    <span> de {formatarArea(totais.colhidoArea)}</span>
-                  </strong>
-                </li>
-              </ul>
-            </section>
-
-            {/* Prontos para colher: o que pede ação agora */}
             {paraColher.length > 0 && (
               <section className="estoque-secao">
                 <h2 className="subtitulo">Pronto para colher</h2>
@@ -174,9 +163,7 @@ export default function Estoque() {
                           </p>
                           <p className="item-estoque__detalhe">
                             {p.agricultora ? `${p.agricultora.nome} · ` : ''}
-                            {situacao === 'atrasado'
-                              ? `época terminou em ${diaEMes(janela.fim)}`
-                              : `colher até ${diaEMes(janela.fim)}`}
+                            {situacao === 'atrasado' ? `época terminou em ${diaEMes(janela.fim)}` : `colher até ${diaEMes(janela.fim)}`}
                           </p>
                         </div>
                         <span className={`selo selo--${situacao}`}>{SITUACOES[situacao].rotulo}</span>
@@ -187,64 +174,132 @@ export default function Estoque() {
               </section>
             )}
 
-            {/* Totais por espécie */}
             <section className="estoque-secao">
               <h2 className="subtitulo">Por espécie</h2>
               <div className="tabela-envoltorio">
-                <table className="tabela tabela--estoque">
+                <table className="tabela tabela--compacta">
                   <thead>
                     <tr>
                       <th scope="col">Espécie</th>
-                      <th scope="col">No campo</th>
-                      <th scope="col">Colhido</th>
+                      <th scope="col" className="tabela__numero">Campo</th>
+                      <th scope="col" className="tabela__numero">Colhido</th>
+                      <th scope="col" className="tabela__numero">Vendido</th>
+                      <th scope="col" className="tabela__numero">Estoque</th>
                     </tr>
                   </thead>
                   <tbody>
                     {especies.map((linha) => {
                       const campo = linha.crescendo + linha.pronto + linha.atrasado;
-                      const prontoArea = linha.pronto + linha.atrasado;
                       return (
                         <tr key={linha.especie}>
                           <th scope="row">{linha.especie}</th>
-                          <td>
-                            {formatarArea(campo)}
-                            {prontoArea > 0 && (
-                              <span className="tabela__nota">{formatarArea(prontoArea)} pronto</span>
-                            )}
+                          <td className="tabela__numero">{campo ? formatarArea(campo) : '—'}</td>
+                          <td className="tabela__numero">{linha.colhidoKg ? formatarKg(linha.colhidoKg) : '—'}</td>
+                          <td className="tabela__numero">{linha.vendidoKg ? formatarKg(linha.vendidoKg) : '—'}</td>
+                          <td className="tabela__numero">
+                            <strong>{linha.colhidoKg ? formatarKg(linha.estoqueKg) : '—'}</strong>
                           </td>
-                          <td>{linha.colhidoKg ? formatarKg(linha.colhidoKg) : '—'}</td>
                         </tr>
                       );
                     })}
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <th scope="row">Total</th>
+                      <td className="tabela__numero">{formatarArea(noCampo)}</td>
+                      <td className="tabela__numero">{formatarKg(totais.colhidoKg)}</td>
+                      <td className="tabela__numero">{formatarKg(totais.vendidoKg)}</td>
+                      <td className="tabela__numero">{formatarKg(totais.estoqueKg)}</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </section>
 
-            {/* Histórico de entradas e saídas */}
             <section className="estoque-secao">
-              <h2 className="subtitulo">Entradas e saídas</h2>
-              <ul className="movimentos">
-                {movimentos.slice(0, mostrarMovimentos).map(({ tipo, data, plantio }) => (
-                  <li key={`${tipo}-${plantio.id}`} className={`movimento movimento--${tipo}`}>
-                    <span className="movimento__icone" aria-hidden="true">
-                      <Icone nome={tipo} tamanho={18} />
-                    </span>
-                    <div>
-                      <p className="movimento__titulo">
-                        {tipo === 'entrada'
-                          ? `Plantio de ${plantio.especie} · ${formatarArea(plantio.area)}`
-                          : `Colheita de ${plantio.especie} · ${formatarKg(plantio.quantidadeColhida)}`}
-                      </p>
-                      <p className="movimento__detalhe">
-                        {tipo === 'entrada' ? 'Entrada' : 'Saída'} · {formatarData(data)}
-                        {plantio.agricultora ? ` · ${plantio.agricultora.nome}` : ''}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {movimentos.length > mostrarMovimentos && (
+              <h2 className="subtitulo">Movimentos</h2>
+              <div className="movimentos-filtros">
+                <div className="seletor-ano" role="group" aria-label="Tipo de movimento">
+                  {[
+                    { valor: '', rotulo: 'Todos' },
+                    { valor: 'plantio', rotulo: 'Plantio' },
+                    { valor: 'entrada', rotulo: 'Colheita' },
+                    { valor: 'saida', rotulo: 'Venda' },
+                  ].map((opcao) => (
+                    <button
+                      key={opcao.valor || 'todos'}
+                      type="button"
+                      className={`seletor-ano__opcao ${tipoMovimento === opcao.valor ? 'seletor-ano__opcao--ativa' : ''}`}
+                      aria-pressed={tipoMovimento === opcao.valor}
+                      onClick={() => filtrarMovimentos(setTipoMovimento)(opcao.valor)}
+                    >
+                      {opcao.rotulo}
+                    </button>
+                  ))}
+                </div>
+                <label className="filtro">
+                  <span className="filtro__rotulo">Espécie</span>
+                  <select
+                    value={especieMovimento}
+                    onChange={(e) => filtrarMovimentos(setEspecieMovimento)(e.target.value)}
+                    className={especieMovimento ? 'filtro--ativo' : ''}
+                  >
+                    <option value="">Todas</option>
+                    {especiesDosMovimentos.map((nome) => (
+                      <option key={nome} value={nome}>
+                        {nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p className="movimentos-contagem" aria-live="polite">
+                {movimentosFiltrados.length} {movimentosFiltrados.length === 1 ? 'movimento' : 'movimentos'}
+                {(tipoMovimento || especieMovimento) && (
+                  <button
+                    type="button"
+                    className="botao-texto"
+                    onClick={() => {
+                      setTipoMovimento('');
+                      setEspecieMovimento('');
+                      setMostrarMovimentos(MOVIMENTOS_POR_VEZ);
+                    }}
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </p>
+              {movimentosFiltrados.length === 0 ? (
+                <p className="painel-cartao__vazio">Nenhum movimento com esses filtros.</p>
+              ) : (
+              <div className="tabela-envoltorio">
+                <table className="tabela tabela--compacta tabela--movimentos">
+                  <thead>
+                    <tr>
+                      <th scope="col">Data</th>
+                      <th scope="col">Movimento</th>
+                      <th scope="col" className="tabela__numero">Qtd.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movimentosFiltrados.slice(0, mostrarMovimentos).map((m) => (
+                      <tr key={`${m.tipo}-${m.plantio.id}-${m.chave ?? ''}`}>
+                        <td className="tabela__data">{formatarData(m.data)}</td>
+                        <td>
+                          <span className={`tipo-movimento tipo-movimento--${TIPO[m.tipo].classe}`}>{TIPO[m.tipo].rotulo}</span>{' '}
+                          {m.plantio.especie}
+                          {m.plantio.agricultora && <span className="tabela__sub">{m.plantio.agricultora.nome}</span>}
+                        </td>
+                        <td className="tabela__numero">
+                          {m.tipo === 'plantio' ? formatarArea(m.plantio.area) : `${m.tipo === 'saida' ? '−' : '+'}${formatarKg(m.kg)}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              )}
+              {movimentosFiltrados.length > mostrarMovimentos && (
                 <button
                   type="button"
                   className="botao botao--secundario"
