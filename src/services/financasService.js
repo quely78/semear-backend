@@ -52,6 +52,15 @@ async function criarGasto(id, body, agricultoraId) {
   return obterFinancas(plantio.id, agricultoraId);
 }
 
+async function editarGasto(id, gastoId, body, agricultoraId) {
+  const plantio = await plantioComFinancas(id, agricultoraId);
+  const idGasto = lerIdDoItem(gastoId, 'Gasto');
+  if (!plantio.gastos.some((g) => g.id === idGasto)) throw new ErroApi(404, 'Gasto não encontrado.');
+  const dados = validarGasto(body);
+  await prisma.gasto.update({ where: { id: idGasto }, data: dados });
+  return obterFinancas(plantio.id, agricultoraId);
+}
+
 async function excluirGasto(id, gastoId, agricultoraId) {
   const plantio = await plantioComFinancas(id, agricultoraId);
   const idGasto = lerIdDoItem(gastoId, 'Gasto');
@@ -80,6 +89,32 @@ async function criarVenda(id, body, agricultoraId) {
           kgDisponiveis: kgDisponiveis(plantio),
         });
         await tx.venda.create({ data: { ...dados, plantioId: plantio.id } });
+      },
+      { isolationLevel: 'Serializable' },
+    );
+  } catch (error) {
+    if (error.code === 'P2034') {
+      throw new ErroApi(409, 'Outra venda foi salva ao mesmo tempo. Confira o estoque e tente de novo.');
+    }
+    throw error;
+  }
+  return obterFinancas(id, agricultoraId);
+}
+
+async function editarVenda(id, vendaId, body, agricultoraId) {
+  const idVenda = lerIdDoItem(vendaId, 'Venda');
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        const plantio = await plantioComFinancas(id, agricultoraId, tx);
+        const atual = plantio.vendas.find((v) => v.id === idVenda);
+        if (!atual) throw new ErroApi(404, 'Venda não encontrada.');
+        // Na edição, os kg desta própria venda voltam a contar como disponíveis
+        const dados = validarVenda(body, {
+          dataColheita: plantio.dataColheita,
+          kgDisponiveis: kgDisponiveis(plantio) + atual.quantidadeKg,
+        });
+        await tx.venda.update({ where: { id: idVenda }, data: dados });
       },
       { isolationLevel: 'Serializable' },
     );
@@ -213,8 +248,10 @@ async function resumoDaComunidade(usuario, query) {
 module.exports = {
   obterFinancas,
   criarGasto,
+  editarGasto,
   excluirGasto,
   criarVenda,
+  editarVenda,
   excluirVenda,
   resumoDaAgricultora,
   resumoDaComunidade,
