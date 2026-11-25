@@ -1,23 +1,9 @@
 // =============================================================
 // config/dados.js — Listas fixas usadas pelo front-end.
 //
-// Por que isso fica no front? A API atual ainda não tem rotas para
-// listar comunidades nem o calendário completo. Enquanto essas rotas
-// não existirem, o front usa estas listas. Quando o back-end criar
-// as rotas, basta trocar a origem dos dados nos arquivos de services/.
+// As comunidades vêm da API (GET /comunidades). Aqui ficam só as listas
+// que são do próprio app (espécies sugeridas e períodos dos filtros).
 // =============================================================
-
-// -------------------------------------------------------------
-// COMUNIDADES
-// O cadastro da agricultora exige "comunidadeId" (número).
-// ⚠️ Os IDs abaixo PRECISAM existir na tabela "Comunidade" do banco.
-// Combine com a equipe de back-end (Karol e João) os IDs e nomes reais.
-// -------------------------------------------------------------
-export const COMUNIDADES = [
-  { id: 1, nome: 'Comunidade 1' },
-  { id: 2, nome: 'Comunidade 2' },
-  { id: 3, nome: 'Comunidade 3' },
-];
 
 // -------------------------------------------------------------
 // ESPÉCIES

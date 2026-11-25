@@ -19,8 +19,10 @@ router.delete('/:id/colheita', plantioController.desfazerColheita);
 // Finanças do plantio: gastos e vendas (venda = saída do que foi colhido)
 router.get('/:id/financas', financasController.doPlantio);
 router.post('/:id/gastos', financasController.criarGasto);
+router.put('/:id/gastos/:itemId', financasController.editarGasto);
 router.delete('/:id/gastos/:itemId', financasController.excluirGasto);
 router.post('/:id/vendas', financasController.criarVenda);
+router.put('/:id/vendas/:itemId', financasController.editarVenda);
 router.delete('/:id/vendas/:itemId', financasController.excluirVenda);
 
 module.exports = router;

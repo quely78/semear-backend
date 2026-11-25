@@ -23,6 +23,14 @@ module.exports = {
     ERRO_SALVAR,
     201,
   ),
+  editarGasto: handler(
+    (req) => financasService.editarGasto(req.params.id, req.params.itemId, req.body, req.user.id),
+    ERRO_SALVAR,
+  ),
+  editarVenda: handler(
+    (req) => financasService.editarVenda(req.params.id, req.params.itemId, req.body, req.user.id),
+    ERRO_SALVAR,
+  ),
   excluirGasto: handler(
     (req) => financasService.excluirGasto(req.params.id, req.params.itemId, req.user.id),
     ERRO_APAGAR,

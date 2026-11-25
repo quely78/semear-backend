@@ -7,3 +7,6 @@ prisma/*.db
 prisma/*.db-journal
 
 npm-debug.log*
+
+# Backups do banco (têm dados das agricultoras)
+backups/

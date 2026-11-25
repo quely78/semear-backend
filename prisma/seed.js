@@ -19,6 +19,11 @@ async function main() {
       create: comunidade,
     });
   }
+  // As comunidades acima entram com id fixo; o contador do banco não anda sozinho.
+  // Sem isto, a próxima comunidade criada tentaria usar o id 1 e daria erro.
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"Comunidade"', 'id'), GREATEST((SELECT MAX(id) FROM "Comunidade"), 1))`,
+  );
   console.log(`Comunidades disponíveis: ${comunidades.length}`);
 
   // upsert por espécie: pode rodar quantas vezes quiser (inclusive a cada deploy no Render)

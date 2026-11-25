@@ -1,0 +1,57 @@
+# Roda os testes a cada Pull Request e a cada envio para a main.
+# Se algo quebrar, o PR mostra um "X" vermelho antes do merge.
+name: Testes
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    name: API (Jest + banco de teste)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: semear
+          POSTGRES_PASSWORD: semear
+          POSTGRES_DB: semear_teste
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U semear -d semear_teste"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://semear:semear@localhost:5432/semear_teste?schema=public
+      JWT_SECRET: segredo-usado-so-nos-testes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Criar as tabelas (migrations) e as comunidades iniciais
+        run: npx prisma migrate deploy && node prisma/seed.js
+      - run: npm test
+
+  front:
+    name: Front (lint, testes e build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: Teste do alerta de época (se existir)
+        run: npm run test:epoca --if-present
+      - run: npm run build

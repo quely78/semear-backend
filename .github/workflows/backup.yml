@@ -1,0 +1,58 @@
+# Backup semanal do banco de produção (Render), CRIPTOGRAFADO.
+#
+# O repositório é público: os arquivos gerados aqui podem ser baixados por
+# qualquer pessoa logada no GitHub. Por isso o backup sai trancado com uma
+# senha (gpg) e só abre com ela.
+#
+# Para ligar (uma vez), em Settings → Secrets and variables → Actions → New secret:
+#   BANCO_URL ...... "External Database URL" do semear-db no painel do Render
+#   BACKUP_SENHA ... uma senha forte só para os backups (guarde num lugar seguro!)
+# Sem esses dois segredos, o backup é pulado (não dá erro).
+#
+# Para abrir um backup baixado:  gpg -d semear-AAAA-MM-DD.sql.gz.gpg | gunzip > backup.sql
+name: Backup do banco
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # toda segunda-feira, 6h UTC (2h em Manaus)
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conferir se os segredos existem
+        id: segredos
+        env:
+          BANCO_URL: ${{ secrets.BANCO_URL }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          if [ -z "$BANCO_URL" ] || [ -z "$BACKUP_SENHA" ]; then
+            echo "Segredos BANCO_URL e BACKUP_SENHA não configurados: backup pulado."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Exportar, compactar e criptografar
+        if: steps.segredos.outputs.ok == 'true'
+        env:
+          BANCO_URL: ${{ secrets.BANCO_URL }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          set -o pipefail
+          arquivo="semear-$(date -u +%F).sql.gz.gpg"
+          # pg_dump numa versão recente (funciona com bancos de versão igual ou menor)
+          docker run --rm postgres:17-alpine pg_dump --no-owner --no-privileges "$BANCO_URL" \
+            | gzip -9 \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_SENHA" --symmetric --cipher-algo AES256 -o "$arquivo"
+          ls -lh "$arquivo"
+          echo "ARQUIVO=$arquivo" >> "$GITHUB_ENV"
+
+      - name: Guardar o backup (30 dias)
+        if: steps.segredos.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARQUIVO }}
+          path: ${{ env.ARQUIVO }}
+          retention-days: 30

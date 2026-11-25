@@ -127,7 +127,8 @@ export function baixarCsv(nome, cabecalhos, linhas) {
     return /[";\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
   };
   const conteudo = [cabecalhos, ...linhas].map((linha) => linha.map(celula).join(';')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([`﻿${conteudo}`], { type: 'text/csv;charset=utf-8' }));
+  // BOM (0xFEFF) no começo: avisa o Excel que o arquivo é UTF-8 (acentos aparecem certos)
+  const url = URL.createObjectURL(new Blob([`${String.fromCharCode(0xfeff)}${conteudo}`], { type: 'text/csv;charset=utf-8' }));
   baixar(url, `${nomeDeArquivo(nome)}.csv`);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
