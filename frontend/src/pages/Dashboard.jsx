@@ -127,7 +127,6 @@ export default function Dashboard() {
   const areaMes = somarPorMes(lista, periodo.meses, (p) => p.dataPlantio, (p) => p.area);
   const anterior = periodoAnterior(periodo);
   const colhido = somaKgNoPeriodo(colheitas, periodo);
-  const vendido = somaKgNoPeriodo(vendas, periodo);
   const areaNoPeriodo = lista.filter((p) => noPeriodo(p.dataPlantio, periodo)).reduce((s, p) => s + p.area, 0);
   // Com filtro: quem tem plantio dentro do filtro. Sem filtro: quem tem algum plantio.
   const ativas = filtrando
