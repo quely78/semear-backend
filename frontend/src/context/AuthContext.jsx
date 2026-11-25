@@ -44,6 +44,8 @@ export function AuthProvider({ children }) {
   /** Encerra a sessão. */
   const sair = useCallback(() => {
     limparSessao();
+    // Celular dividido: os dados guardados para uso sem internet saem junto
+    navigator.serviceWorker?.controller?.postMessage('apagar-dados');
     setUsuario(null);
   }, []);
 

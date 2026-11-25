@@ -5,6 +5,7 @@
 // Uso:
 //   <Layout cabecalho={{ titulo: 'Calendário' }}> ...conteúdo... </Layout>
 // =============================================================
+import AvisoConexao from './AvisoConexao';
 import Cabecalho from './Cabecalho';
 import MenuInferior from './MenuInferior';
 
@@ -12,6 +13,7 @@ export default function Layout({ cabecalho = {}, comMenu = true, children }) {
   return (
     <div className={`tela ${comMenu ? 'tela--com-menu' : ''}`}>
       <Cabecalho {...cabecalho} />
+      <AvisoConexao />
       <main className="tela__conteudo">{children}</main>
       {comMenu && <MenuInferior />}
     </div>

@@ -206,6 +206,17 @@ Se algo quebrar, o PR mostra um **X vermelho**: corrija antes de fazer o merge. 
 
 As versões ficam fixas no `package.json` (nada de `"latest"`), para todo mundo instalar o mesmo. Sobram avisos do `npm audit` só no **Prisma 6** (ferramenta usada no build e nas migrations, não nas requisições das usuárias). A correção exige migrar para o Prisma 7, uma mudança grande que fica para uma tarefa própria.
 
+## Uso sem internet (campo)
+
+Na versão publicada, o app funciona com internet fraca ou sem internet:
+
+- **Abrir o app e ver os dados:** um *service worker* ([`frontend/public/sw.js`](frontend/public/sw.js)) guarda as telas no celular e a última resposta de cada consulta à API. Sem internet, o app abre e mostra os dados da última vez.
+- **Anotar sem internet:** plantio novo, gasto e venda ficam guardados no celular ([`frontend/src/services/filaOffline.js`](frontend/src/services/filaOffline.js)) e são **enviados sozinhos** quando a conexão volta (ao abrir o app, ao reconectar e a cada 30 s). Uma faixa no topo mostra quantos registros estão esperando.
+- Se a API recusar um registro guardado (ex.: venda maior que o estoque), ele aparece na faixa com o motivo.
+- Cada registro guardado só é enviado com a mesma conta. Ao **Sair**, os dados guardados no celular são apagados (celular dividido não mistura dados).
+- No `npm run dev` o service worker fica desligado (para não atrapalhar as atualizações). Para testar: `npm run build` e `npx vite preview` dentro de `frontend/`.
+- Dá para "instalar" no celular pelo menu do navegador (*Adicionar à tela inicial*).
+
 ## Publicar no Render
 
 O arquivo [`render.yaml`](render.yaml) descreve tudo o que o Render precisa criar, no plano gratuito:

@@ -15,7 +15,7 @@ import Carregando from '../components/Carregando';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import useFinancasDoPlantio from '../hooks/useFinancasDoPlantio';
-import { anotarVenda, apagarVenda } from '../services/financasService';
+import { anotarVenda, apagarVenda, editarVenda } from '../services/financasService';
 import { deIso, hoje as calcularHoje } from '../utils/datas';
 import {
   CANAIS_VENDA,
@@ -40,6 +40,7 @@ export default function VendasPlantio() {
   const [erroGeral, setErroGeral] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [editando, setEditando] = useState(null); // venda sendo corrigida (ou null = nova)
 
   if (carregando) {
     return (
@@ -58,7 +59,8 @@ export default function VendasPlantio() {
 
   const { plantio, vendas, resumo } = financas;
   const dataColheita = plantio.dataColheita ? deIso(plantio.dataColheita) : null;
-  const estoque = resumo.kgEmEstoque || 0;
+  // Ao corrigir uma venda, os kg dela voltam a contar como disponíveis
+  const estoque = (resumo.kgEmEstoque || 0) + (editando ? editando.quantidadeKg : 0);
 
   // Prévia do que ela vai receber
   const kg = converterNumero(form.quantidadeKg);
@@ -71,6 +73,27 @@ export default function VendasPlantio() {
     setForm((atual) => ({ ...atual, [name]: value }));
     setErros((atual) => ({ ...atual, [name]: '' }));
     setSucesso('');
+  }
+
+  /** Carrega uma venda no formulário para corrigir. */
+  function aoEditar(venda) {
+    setEditando(venda);
+    setForm({
+      quantidadeKg: venda.quantidadeKg.toLocaleString('pt-BR'),
+      precoKg: venda.precoKg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      canal: venda.canal,
+      data: String(venda.data).slice(0, 10),
+    });
+    setErros({});
+    setSucesso('');
+    setErroGeral('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function aoCancelarEdicao() {
+    setEditando(null);
+    setForm(formVazio);
+    setErros({});
   }
 
   async function aoSalvar(evento) {
@@ -97,15 +120,16 @@ export default function VendasPlantio() {
     setSalvando(true);
     setErroGeral('');
     try {
-      const atualizado = await anotarVenda(id, {
-        quantidadeKg: kg,
-        precoKg: preco,
-        canal: form.canal,
-        data: form.data,
-      });
-      setFinancas(atualizado);
+      const dados = { quantidadeKg: kg, precoKg: preco, canal: form.canal, data: form.data };
+      const atualizado = editando ? await editarVenda(id, editando.id, dados) : await anotarVenda(id, dados);
       setForm(formVazio);
-      setSucesso(`Venda de ${formatarReais(kg * preco)} anotada.`);
+      if (atualizado?.pendente) {
+        setSucesso('Sem internet: a venda ficou guardada no celular e será enviada quando a conexão voltar.');
+        return;
+      }
+      setFinancas(atualizado);
+      setSucesso(editando ? 'Venda corrigida.' : `Venda de ${formatarReais(kg * preco)} anotada.`);
+      setEditando(null);
     } catch (e) {
       if (e.campos) setErros(e.campos);
       else setErroGeral(e.message);
@@ -148,10 +172,11 @@ export default function VendasPlantio() {
             <Icone nome="cesta" tamanho={20} /> Ir para o calendário
           </Link>
         </section>
-      ) : estoque <= 0 ? (
+      ) : estoque <= 0 && !editando ? (
         <Aviso tipo="info">Tudo o que você colheu já foi vendido. Não há mais kg no estoque.</Aviso>
       ) : (
         <form className="cartao formulario" onSubmit={aoSalvar} noValidate>
+          {editando && <h2 className="subtitulo subtitulo--sem-margem">Corrigir venda</h2>}
           <div className="financas__campos">
             <Campo id="quantidadeKg" rotulo="Quantos kg?" dica={`Até ${formatarKg(estoque)}`} erro={erros.quantidadeKg}>
               <input id="quantidadeKg" name="quantidadeKg" type="text" inputMode="decimal" placeholder="0" value={form.quantidadeKg} onChange={aoDigitar} />
@@ -195,9 +220,16 @@ export default function VendasPlantio() {
           )}
 
           <Aviso tipo="erro">{erroGeral}</Aviso>
-          <button type="submit" className="botao botao--primario" disabled={salvando}>
-            {salvando ? 'Salvando...' : 'Salvar venda'}
-          </button>
+          <div className={editando ? 'confirmacao__botoes' : ''}>
+            {editando && (
+              <button type="button" className="botao botao--secundario" onClick={aoCancelarEdicao} disabled={salvando}>
+                Cancelar
+              </button>
+            )}
+            <button type="submit" className="botao botao--primario" disabled={salvando}>
+              {salvando ? 'Salvando...' : editando ? 'Salvar correção' : 'Salvar venda'}
+            </button>
+          </div>
         </form>
       )}
       <Aviso tipo="sucesso">{sucesso}</Aviso>
@@ -210,7 +242,7 @@ export default function VendasPlantio() {
           </div>
           <ul className="financas__lista">
             {vendas.map((v) => (
-              <li key={v.id} className="financas__item">
+              <li key={v.id} className={`financas__item ${editando?.id === v.id ? 'financas__item--editando' : ''}`}>
                 <div className="financas__item-texto">
                   <p className="financas__item-titulo">
                     {formatarKg(v.quantidadeKg)} · {rotuloCanal(v.canal)}
@@ -220,6 +252,14 @@ export default function VendasPlantio() {
                   </p>
                 </div>
                 <strong>{formatarReais(v.quantidadeKg * v.precoKg)}</strong>
+                <button
+                  type="button"
+                  className="financas__editar"
+                  onClick={() => aoEditar(v)}
+                  aria-label={`Corrigir venda de ${formatarKg(v.quantidadeKg)} em ${formatarData(v.data)}`}
+                >
+                  <Icone nome="lapis" tamanho={18} />
+                </button>
                 <button
                   type="button"
                   className="financas__apagar"

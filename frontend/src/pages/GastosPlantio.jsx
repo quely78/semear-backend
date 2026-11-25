@@ -14,7 +14,7 @@ import GraficoBarrasH from '../components/graficos/GraficoBarrasH';
 import Icone from '../components/Icone';
 import Layout from '../components/Layout';
 import useFinancasDoPlantio from '../hooks/useFinancasDoPlantio';
-import { anotarGasto, apagarGasto } from '../services/financasService';
+import { anotarGasto, apagarGasto, editarGasto } from '../services/financasService';
 import { hoje as calcularHoje } from '../utils/datas';
 import {
   CATEGORIAS_GASTO,
@@ -39,6 +39,28 @@ export default function GastosPlantio() {
   const [erroGeral, setErroGeral] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [editando, setEditando] = useState(null); // gasto sendo corrigido (ou null = novo)
+
+  /** Carrega um gasto no formulário para corrigir. */
+  function aoEditar(gasto) {
+    setEditando(gasto);
+    setForm({
+      categoria: gasto.categoria,
+      valor: gasto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      data: String(gasto.data).slice(0, 10),
+      descricao: gasto.descricao || '',
+    });
+    setErros({});
+    setSucesso('');
+    setErroGeral('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function aoCancelarEdicao() {
+    setEditando(null);
+    setForm(formVazio);
+    setErros({});
+  }
 
   function aoDigitar(evento) {
     const { name, value } = evento.target;
@@ -60,15 +82,25 @@ export default function GastosPlantio() {
     setSalvando(true);
     setErroGeral('');
     try {
-      const atualizado = await anotarGasto(id, {
+      const dados = {
         categoria: form.categoria,
         valor: converterDinheiro(form.valor),
         data: form.data,
         descricao: form.descricao.trim() || undefined,
-      });
-      setFinancas(atualizado);
+      };
+      const atualizado = editando ? await editarGasto(id, editando.id, dados) : await anotarGasto(id, dados);
       setForm(formVazio);
-      setSucesso(`Gasto de ${formatarReais(converterDinheiro(form.valor))} anotado.`);
+      if (atualizado?.pendente) {
+        setSucesso('Sem internet: o gasto ficou guardado no celular e será enviado quando a conexão voltar.');
+        return;
+      }
+      setFinancas(atualizado);
+      setSucesso(
+        editando
+          ? 'Gasto corrigido.'
+          : `Gasto de ${formatarReais(converterDinheiro(form.valor))} anotado.`,
+      );
+      setEditando(null);
     } catch (e) {
       if (e.campos) setErros(e.campos);
       else setErroGeral(e.message);
@@ -119,7 +151,7 @@ export default function GastosPlantio() {
       <h1 className="titulo">Gastos: {especie.toLowerCase()}</h1>
 
       <form className="cartao formulario" onSubmit={aoSalvar} noValidate>
-        <h2 className="subtitulo subtitulo--sem-margem">Anotar um gasto</h2>
+        <h2 className="subtitulo subtitulo--sem-margem">{editando ? 'Corrigir gasto' : 'Anotar um gasto'}</h2>
 
         <fieldset className="opcoes">
           <legend className="campo__rotulo">Com o quê?</legend>
@@ -155,9 +187,16 @@ export default function GastosPlantio() {
 
         <Aviso tipo="erro">{erroGeral}</Aviso>
         <Aviso tipo="sucesso">{sucesso}</Aviso>
-        <button type="submit" className="botao botao--primario" disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Salvar gasto'}
-        </button>
+        <div className={editando ? 'confirmacao__botoes' : ''}>
+          {editando && (
+            <button type="button" className="botao botao--secundario" onClick={aoCancelarEdicao} disabled={salvando}>
+              Cancelar
+            </button>
+          )}
+          <button type="submit" className="botao botao--primario" disabled={salvando}>
+            {salvando ? 'Salvando...' : editando ? 'Salvar correção' : 'Salvar gasto'}
+          </button>
+        </div>
       </form>
 
       <section className="cartao">
@@ -183,7 +222,7 @@ export default function GastosPlantio() {
             />
             <ul className="financas__lista">
               {gastos.map((g) => (
-                <li key={g.id} className="financas__item">
+                <li key={g.id} className={`financas__item ${editando?.id === g.id ? 'financas__item--editando' : ''}`}>
                   <div className="financas__item-texto">
                     <p className="financas__item-titulo">{rotuloCategoria(g.categoria)}</p>
                     <p className="texto-apoio">
@@ -192,6 +231,14 @@ export default function GastosPlantio() {
                     </p>
                   </div>
                   <strong>{formatarReais(g.valor)}</strong>
+                  <button
+                    type="button"
+                    className="financas__editar"
+                    onClick={() => aoEditar(g)}
+                    aria-label={`Corrigir gasto ${rotuloCategoria(g.categoria)} de ${formatarReais(g.valor)}`}
+                  >
+                    <Icone nome="lapis" tamanho={18} />
+                  </button>
                   <button
                     type="button"
                     className="financas__apagar"
