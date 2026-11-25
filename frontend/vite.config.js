@@ -15,4 +15,9 @@ export default defineConfig({
     // Abre o navegador automaticamente ao rodar "npm run dev"
     open: true,
   },
+
+  // Testes do front (npm test): arquivos *.spec.js, sem navegador
+  test: {
+    include: ['src/**/*.spec.js'],
+  },
 });
