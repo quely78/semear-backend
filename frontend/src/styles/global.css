@@ -3496,3 +3496,86 @@ a.cabecalho__saudacao:hover .cabecalho__avatar {
   padding: 6px 12px;
   font-size: 14px;
 }
+
+/* Corrigir gasto/venda: botão de lápis e item em edição destacado */
+.financas__editar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--verde-mata);
+  cursor: pointer;
+}
+
+.financas__editar:hover {
+  background: var(--verde-claro);
+}
+
+.financas__item--editando {
+  background: var(--verde-claro);
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 4px;
+}
+
+/* Faixa de conexão (sem internet / registros esperando / enviados) */
+.aviso-conexao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 16px 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--areia-escura);
+  font-size: 14px;
+  color: var(--tinta);
+}
+
+.aviso-conexao__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin: 0;
+}
+
+.aviso-conexao__linha--offline {
+  justify-content: flex-start;
+  font-weight: 600;
+  color: var(--terra);
+}
+
+.aviso-conexao__linha--ok {
+  justify-content: flex-start;
+  color: #24603d;
+  font-weight: 600;
+}
+
+.aviso-conexao__linha--erro {
+  justify-content: flex-start;
+  color: var(--rosa-escuro);
+  font-weight: 600;
+}
+
+.aviso-conexao__falhas ul {
+  margin: 4px 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.aviso-conexao__linha--offline,
+.aviso-conexao__linha--ok,
+.aviso-conexao__linha--erro {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.aviso-conexao__linha svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
