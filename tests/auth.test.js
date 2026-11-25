@@ -87,6 +87,36 @@ describe('Autenticação (/auth)', () => {
     });
   });
 
+  describe('token (middleware de autenticação)', () => {
+    const jwt = require('jsonwebtoken');
+
+    test('sem token, token inválido ou assinado com outra chave: 401', async () => {
+      const agricultora = await ajuda.criarAgricultora(comunidade.id);
+      const semToken = await request(app).get('/perfil');
+      const invalido = await request(app).get('/perfil').set('Authorization', 'Bearer isto-nao-e-um-token');
+      const outraChave = await request(app)
+        .get('/perfil')
+        .set('Authorization', `Bearer ${jwt.sign({ id: agricultora.id, tipo: 'AGRICULTORA' }, 'chave-errada')}`);
+
+      expect([semToken.status, invalido.status, outraChave.status]).toEqual([401, 401, 401]);
+    });
+
+    test('token expirado: 401', async () => {
+      const agricultora = await ajuda.criarAgricultora(comunidade.id);
+      const expirado = jwt.sign({ id: agricultora.id, tipo: 'AGRICULTORA' }, process.env.JWT_SECRET, { expiresIn: -10 });
+      const resposta = await request(app).get('/perfil').set('Authorization', `Bearer ${expirado}`);
+      expect(resposta.status).toBe(401);
+    });
+
+    test('token válido de uma conta apagada: 401', async () => {
+      const agricultora = await ajuda.criarAgricultora(comunidade.id);
+      const token = ajuda.tokenDe(agricultora, 'AGRICULTORA');
+      await prisma.agricultora.delete({ where: { id: agricultora.id } });
+      const resposta = await request(app).get('/perfil').set('Authorization', `Bearer ${token}`);
+      expect(resposta.status).toBe(401);
+    });
+  });
+
   describe('trocar a senha', () => {
     test('exige login, confere a senha atual e troca', async () => {
       const agricultora = await ajuda.criarAgricultora(comunidade.id, { senhaProvisoria: true });
