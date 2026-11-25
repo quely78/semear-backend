@@ -18,6 +18,7 @@ import { buscarResumoDaAgricultora } from '../services/financasService';
 import { obterPerfil } from '../services/perfilService';
 import { hoje as calcularHoje } from '../utils/datas';
 import { formatarMargem, formatarReais } from '../utils/dinheiro';
+import { imprimir } from '../utils/exportarPainel';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 /** Plantios → linhas por espécie (somando plantios da mesma espécie). */
@@ -75,7 +76,6 @@ export default function RelatorioFinanceiro() {
     <Layout cabecalho={{ voltarPara: '/plantios/rendimento', rotuloVoltar: 'Qual plantio rende mais' }}>
       <div className="nao-imprimir">
         <h1 className="titulo">Relatório de vendas</h1>
-        <p className="texto-apoio">Para pedir crédito (Pronaf) ou mostrar ao banco</p>
       </div>
 
       <div className="financas__campos nao-imprimir">
@@ -157,7 +157,7 @@ export default function RelatorioFinanceiro() {
               </p>
             </article>
 
-            <button type="button" className="botao botao--primario nao-imprimir" onClick={() => window.print()}>
+            <button type="button" className="botao botao--primario nao-imprimir" onClick={() => imprimir('imprimindo-relatorio')}>
               <Icone nome="baixar" tamanho={18} /> Baixar PDF
             </button>
             <p className="texto-apoio nao-imprimir">
