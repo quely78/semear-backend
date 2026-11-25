@@ -18,7 +18,7 @@ import { buscarResumoDaAgricultora } from '../services/financasService';
 import { obterPerfil } from '../services/perfilService';
 import { hoje as calcularHoje } from '../utils/datas';
 import { formatarMargem, formatarReais } from '../utils/dinheiro';
-import { imprimir } from '../utils/exportarPainel';
+import { baixarRelatorioPng, imprimir } from '../utils/exportarPainel';
 import { formatarArea, formatarData } from '../utils/formatadores';
 
 /** Plantios → linhas por espécie (somando plantios da mesma espécie). */
@@ -157,9 +157,33 @@ export default function RelatorioFinanceiro() {
               </p>
             </article>
 
-            <button type="button" className="botao botao--primario nao-imprimir" onClick={() => imprimir('imprimindo-relatorio')}>
-              <Icone nome="baixar" tamanho={18} /> Baixar PDF
-            </button>
+            <div className="financas__acoes nao-imprimir">
+              <button type="button" className="botao botao--primario" onClick={() => imprimir('imprimindo-relatorio')}>
+                <Icone nome="baixar" tamanho={18} /> Baixar PDF
+              </button>
+              <button
+                type="button"
+                className="botao botao--secundario"
+                onClick={() =>
+                  baixarRelatorioPng({
+                    titulo: 'Relatório de produção e vendas',
+                    periodo: `${formatarData(dados.periodo.dataInicio)} a ${formatarData(dados.periodo.dataFim)}`,
+                    dados: [
+                      ['Agricultora:', usuario?.nome || ''],
+                      ...(comunidade ? [['Comunidade:', `${comunidade} — Rio Preto da Eva/AM`]] : []),
+                      ['Área plantada:', `${formatarArea(areaTotal)} · ${dados.plantios.length} plantios`],
+                    ],
+                    cabecalhos: ['Espécie', 'Vendas', 'Gastos'],
+                    linhas: linhas.map((l) => [l.especie, formatarReais(l.receita), formatarReais(l.gastos)]),
+                    total: ['Total', formatarReais(dados.total.receita), formatarReais(dados.total.gastos)],
+                    resultado: [`Resultado: ${formatarReais(dados.total.lucro)}`, `Margem: ${formatarMargem(dados.total.margem)}`],
+                    rodape: `Valores informados pela própria agricultora no SemeAR. Gerado em ${formatarData(hoje)}.`,
+                  })
+                }
+              >
+                <Icone nome="baixar" tamanho={18} /> Baixar imagem
+              </button>
+            </div>
             <p className="texto-apoio nao-imprimir">
               Na tela de impressão, escolha <strong>Salvar como PDF</strong>.
             </p>

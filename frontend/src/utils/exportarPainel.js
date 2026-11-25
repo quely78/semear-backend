@@ -147,3 +147,100 @@ export function imprimir(classe) {
   window.addEventListener('afterprint', limpar);
   window.print();
 }
+
+/**
+ * Relatório como imagem PNG (bom para mandar pelo WhatsApp).
+ * @param {object} r
+ * @param {string} r.titulo        ex.: "Relatório de produção e vendas"
+ * @param {string} r.periodo       ex.: "01/01/2026 a 25/11/2026"
+ * @param {Array<[string,string]>} r.dados  linhas "Rótulo: valor" (agricultora, comunidade...)
+ * @param {string[]} r.cabecalhos  colunas da tabela
+ * @param {string[][]} r.linhas    linhas da tabela (a 1ª coluna é o nome)
+ * @param {string[]} r.total       linha de total
+ * @param {string[]} r.resultado   ex.: ["Resultado: R$ 1.085,00", "Margem: 52%"]
+ * @param {string} r.rodape
+ */
+export async function baixarRelatorioPng(r) {
+  await document.fonts?.ready;
+  const largura = 720;
+  const margem = 40;
+  const linhaTabela = 34;
+  const altura = 250 + r.dados.length * 26 + (r.linhas.length + 2) * linhaTabela + 80;
+  const escala = 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = largura * escala;
+  canvas.height = altura * escala;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(escala, escala);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, largura, altura);
+
+  // Cabeçalho
+  ctx.fillStyle = '#355e3b';
+  ctx.font = '700 30px "Baloo 2", system-ui, sans-serif';
+  ctx.fillText('SemeAR', margem, 62);
+  ctx.fillStyle = COR_SUAVE;
+  ctx.font = '400 15px "Work Sans", system-ui, sans-serif';
+  ctx.fillText(r.titulo, margem, 86);
+  ctx.textAlign = 'right';
+  ctx.fillText(r.periodo, largura - margem, 62);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#355e3b';
+  ctx.fillRect(margem, 104, largura - margem * 2, 3);
+
+  // Dados da agricultora
+  let y = 140;
+  r.dados.forEach(([rotulo, valor]) => {
+    ctx.fillStyle = COR_TINTA;
+    ctx.font = '700 15px "Work Sans", system-ui, sans-serif';
+    ctx.fillText(rotulo, margem, y);
+    const w = ctx.measureText(`${rotulo} `).width;
+    ctx.font = '400 15px "Work Sans", system-ui, sans-serif';
+    ctx.fillText(valor, margem + w, y);
+    y += 26;
+  });
+
+  // Tabela
+  y += 14;
+  const colunas = r.cabecalhos.length;
+  const larguraTabela = largura - margem * 2;
+  const xColuna = (i) => (i === 0 ? margem + 10 : margem + larguraTabela - (colunas - 1 - i) * 150 - 10);
+  const escrever = (valores, peso) => {
+    ctx.font = `${peso} 14px "Work Sans", system-ui, sans-serif`;
+    ctx.fillStyle = COR_TINTA;
+    valores.forEach((v, i) => {
+      ctx.textAlign = i === 0 ? 'left' : 'right';
+      ctx.fillText(v, xColuna(i), y + 22);
+    });
+    ctx.textAlign = 'left';
+  };
+  ctx.fillStyle = '#e7f0dc';
+  ctx.fillRect(margem, y, larguraTabela, linhaTabela);
+  escrever(r.cabecalhos, 700);
+  y += linhaTabela;
+  r.linhas.forEach((linha) => {
+    escrever(linha, 400);
+    y += linhaTabela;
+    ctx.fillStyle = '#e3d8c3';
+    ctx.fillRect(margem, y - 1, larguraTabela, 1);
+  });
+  escrever(r.total, 700);
+  y += linhaTabela + 16;
+
+  // Resultado
+  ctx.fillStyle = '#e7f0dc';
+  ctx.fillRect(margem, y, larguraTabela, 44);
+  ctx.fillStyle = COR_TINTA;
+  ctx.font = '700 16px "Work Sans", system-ui, sans-serif';
+  ctx.fillText(r.resultado[0], margem + 14, y + 28);
+  ctx.textAlign = 'right';
+  ctx.fillText(r.resultado[1], largura - margem - 14, y + 28);
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = COR_SUAVE;
+  ctx.font = '400 12px "Work Sans", system-ui, sans-serif';
+  ctx.fillText(r.rodape, margem, altura - 28);
+
+  baixar(canvas.toDataURL('image/png'), `${nomeDeArquivo(`relatorio ${r.periodo}`)}.png`);
+}
