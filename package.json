@@ -11,6 +11,11 @@
     "start:render": "prisma migrate deploy && node prisma/seed.js && node src/app.js",
     "test": "jest --runInBand"
   },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/frontend/"
+    ]
+  },
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "bcrypt": "latest",

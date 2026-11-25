@@ -21,7 +21,9 @@ import Layout from '../components/Layout';
 import RegistroColheita from '../components/RegistroColheita';
 import { CATEGORIAS, CICLOS, epocaDoMes } from '../config/ciclos';
 import { buscarPrevisaoChuva } from '../services/climaService';
+import { buscarCalendarioDaEspecie } from '../services/calendarioService';
 import { buscarPlantio } from '../services/plantioService';
+import { avaliarEpocaPlantio } from '../utils/epocaPlantio';
 import {
   deIso,
   diaEMes,
@@ -96,6 +98,7 @@ export default function CalendarioPlantio() {
   const [plantio, setPlantio] = useState(local.state?.plantio || null);
   const [carregando, setCarregando] = useState(!local.state?.plantio);
   const [erro, setErro] = useState('');
+  const [alertaEpoca, setAlertaEpoca] = useState(null);
 
   // Previsão do tempo (carrega em paralelo, sem travar a tela)
   const [previsao, setPrevisao] = useState(null);
@@ -121,6 +124,26 @@ export default function CalendarioPlantio() {
       .then(setPrevisao)
       .finally(() => setBuscandoPrevisao(false));
   }, []);
+
+  useEffect(() => {
+    if (!plantio?.especie || !plantio?.dataPlantio) {
+      setAlertaEpoca(null);
+      return;
+    }
+
+    let ativo = true;
+    buscarCalendarioDaEspecie(plantio.especie)
+      .then((calendario) => {
+        if (ativo) setAlertaEpoca(avaliarEpocaPlantio(deIso(plantio.dataPlantio), calendario));
+      })
+      .catch(() => {
+        if (ativo) setAlertaEpoca(null);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [plantio?.especie, plantio?.dataPlantio]);
 
   const periodos = useMemo(
     () => (plantio ? montarPeriodos(plantio, previsao) : []),
@@ -184,6 +207,12 @@ export default function CalendarioPlantio() {
 
       {/* Calendário | Dinheiro */}
       <AbasPlantio plantio={plantio} ativa="calendario" voltar={voltar} />
+
+      {alertaEpoca && (
+        <Aviso tipo={alertaEpoca.dentroDaEpoca ? 'sucesso' : 'erro'}>
+          {alertaEpoca.mensagem}
+        </Aviso>
+      )}
 
       {/* Situação no estoque + registrar colheita (saída do estoque) */}
       <RegistroColheita plantio={plantio} hoje={hoje} aoAtualizar={setPlantio} />
