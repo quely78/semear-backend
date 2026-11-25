@@ -2542,14 +2542,14 @@ a.cabecalho__saudacao:hover .cabecalho__avatar {
 
 /* Impressão / "Salvar como PDF": só o documento do relatório */
 @media print {
-  body * {
+  body.imprimindo-relatorio * {
     visibility: hidden;
   }
-  .relatorio,
-  .relatorio * {
+  body.imprimindo-relatorio .relatorio,
+  body.imprimindo-relatorio .relatorio * {
     visibility: visible;
   }
-  .relatorio {
+  body.imprimindo-relatorio .relatorio {
     position: absolute;
     top: 0;
     left: 0;
@@ -2563,4 +2563,936 @@ a.cabecalho__saudacao:hover .cabecalho__avatar {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+}
+
+/* -------------------------------------------------------------
+   PAINÉIS (dashboards) — indicadores, gráficos de colunas e linha,
+   barra dividida em partes, filtros e tabelas compactas
+   ------------------------------------------------------------- */
+
+.painel-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seletor-ano {
+  flex-wrap: wrap;
+}
+
+.painel-pilha {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Recarregando: mantém o desenho anterior, mais apagado (sem piscar) */
+.painel--atualizando {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.painel-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.painel-secao__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.painel-secao__periodo {
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.painel-secao__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--verde-mata);
+}
+
+.painel-indicadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Cartão de indicador */
+.indicador-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 14px 10px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.indicador-painel--link {
+  transition: border-color 0.15s;
+}
+
+.indicador-painel--link:hover {
+  border-color: var(--verde-mata);
+}
+
+.indicador-painel--alerta {
+  border-color: var(--rosa-ipe);
+  background: var(--rosa-claro);
+}
+
+.indicador-painel__rotulo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* Número do indicador: mesma fonte do texto (não a de título), algarismos proporcionais */
+.indicador-painel__valor {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+}
+
+.indicador-painel__detalhe {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--tinta-suave);
+}
+
+.indicador-painel__variacao {
+  font-weight: 700;
+  color: var(--tinta-suave);
+}
+
+.indicador-painel__variacao--boa {
+  color: #2e7d4f;
+}
+
+.indicador-painel__variacao--ruim {
+  color: var(--rosa-texto);
+}
+
+.indicador-painel__comparacao {
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+.sparkline {
+  height: 28px;
+  margin-top: 6px;
+}
+
+.sparkline svg {
+  display: block;
+}
+
+/* Cartão de gráfico */
+.painel-cartao {
+  padding: 16px;
+}
+
+.painel-cartao__topo {
+  margin-bottom: 10px;
+}
+
+.painel-cartao__sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* Gráficos SVG */
+.grafico-painel__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--tinta);
+}
+
+.grafico-painel__legenda li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grafico-painel__chave {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.grafico-painel__area {
+  position: relative;
+}
+
+.grafico-painel__area svg {
+  display: block;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.grafico-painel__area svg:focus-visible,
+.grafico-painel__area rect:focus-visible {
+  outline: 2px solid var(--verde-mata);
+  outline-offset: 2px;
+}
+
+.grafico-painel__eixo {
+  font-family: var(--fonte-corpo);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  fill: var(--tinta-suave);
+}
+
+.grafico-painel__valor {
+  font-family: var(--fonte-corpo);
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--tinta);
+}
+
+.grafico-painel__vazio {
+  position: absolute;
+  inset: 0 0 24px 44px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* Dica (tooltip): o valor em destaque, o nome da série em segundo plano */
+.grafico-painel__dica {
+  position: absolute;
+  top: -6px;
+  transform: translate(-50%, -100%);
+  min-width: 132px;
+  padding: 8px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(34, 48, 31, 0.14);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.grafico-painel__dica-titulo {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.grafico-painel__dica-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--tinta-suave);
+  white-space: nowrap;
+}
+
+.grafico-painel__dica-linha strong {
+  font-size: 14px;
+  color: var(--tinta);
+}
+
+.grafico-painel__dica-chave {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.grafico-painel__tabela {
+  margin-top: 4px;
+}
+
+.grafico-painel__tabela summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--verde-mata);
+  cursor: pointer;
+}
+
+/* Tabela compacta dos painéis: cabeçalho discreto, números alinhados */
+.tabela--compacta th,
+.tabela--compacta td {
+  padding: 9px 8px;
+  font-size: 13px;
+}
+
+.tabela--compacta thead th {
+  background: transparent;
+  color: var(--tinta-suave);
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--linha-campo);
+}
+
+.tabela .tabela__numero {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Margem dentro da tabela: barrinha + número */
+.margem-celula {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.margem-celula__trilho {
+  display: inline-block;
+  width: 36px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--trilho);
+  overflow: hidden;
+}
+
+.margem-celula__barra {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #2e7d4f;
+}
+
+/* Barra dividida em partes */
+.barra-partes__barra {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+}
+
+.barra-partes__parte {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 0.15s;
+}
+
+.barra-partes__parte--ativa {
+  filter: brightness(1.12);
+}
+
+.barra-partes__vazia {
+  flex: 1;
+  border-radius: 4px;
+  background: var(--trilho);
+}
+
+.barra-partes__lista {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barra-partes__lista li {
+  display: grid;
+  grid-template-columns: auto 1fr auto 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 4px;
+  border-top: 1px solid var(--linha);
+  font-size: 14px;
+}
+
+.barra-partes__lista li:first-child {
+  border-top: 0;
+}
+
+.barra-partes__item--ativo {
+  background: var(--areia-listra);
+}
+
+.barra-partes__lista strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-partes__pct {
+  text-align: right;
+  font-size: 13px;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barras horizontais finas (espécies, canais) */
+.grafico__trilho--fino {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.grafico__trilho--fino .grafico__barra {
+  border-radius: 4px;
+}
+
+.grafico__valores {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.grafico__pct {
+  min-width: 34px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Movimentos do estoque: plantio (campo), colheita (entra), venda (sai) */
+.movimento--plantio .movimento__icone {
+  background: var(--areia-escura);
+  color: var(--terra);
+}
+
+.movimento--saida .movimento__icone {
+  background: #f6ead7;
+  color: #8a5512;
+}
+
+/* Calendário geral: o que acontece no dia, por plantio */
+.cal-detalhe__chuva {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.cal-plantios-dia {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cal-plantios-dia__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.cal-plantios-dia__item:hover {
+  border-color: var(--verde-mata);
+}
+
+.cal-plantios-dia__nome {
+  grid-column: 1;
+  font-weight: 700;
+}
+
+.cal-evento--compacto {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.cal-plantios-dia__seta {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+  align-self: center;
+  color: var(--tinta-suave);
+}
+
+/* Agricultora: "Redefinir senha" dentro do mesmo cartão */
+.agricultora-item {
+  gap: 0;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  overflow: hidden;
+}
+
+.agricultora-item > .agricultora-card {
+  border: 0;
+  border-radius: 0;
+}
+
+.agricultora-item .redefinir__abrir {
+  align-self: stretch;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 0 16px;
+  border-top: 1px solid var(--linha);
+}
+
+.agricultora-item .redefinir {
+  margin: 0 12px 12px;
+}
+
+/* -------------------------------------------------------------
+   PAINÉIS — parte 2: ferramentas/exportação, cartões de gráfico,
+   estoque técnico e medidor do ponto de equilíbrio
+   ------------------------------------------------------------- */
+
+/* Período + exportar, numa faixa acima de tudo */
+.painel-ferramentas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.painel-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.painel-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--linha-campo);
+  border-radius: 10px;
+  background: var(--papel);
+  color: var(--verde-mata);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.painel-acao:hover {
+  border-color: var(--verde-mata);
+}
+
+/* Cabeçalho que só aparece no PDF do painel */
+.painel-impressao {
+  display: none;
+}
+
+/* Cartão de gráfico: título à esquerda, "PNG" à direita */
+.painel-cartao__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.painel-cartao__titulo {
+  margin: 0;
+  font-family: var(--fonte-corpo);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.painel-cartao__baixar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 36px;
+  min-width: 44px;
+  padding: 4px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.painel-cartao__baixar:hover {
+  border-color: var(--verde-mata);
+  color: var(--verde-mata);
+}
+
+.painel-cartao__vazio {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.grafico-painel__nome {
+  font-family: var(--fonte-corpo);
+  font-size: 13px;
+  fill: var(--tinta);
+}
+
+.grafico-painel__vazio--solto {
+  position: static;
+  display: block;
+  padding: 12px 0;
+}
+
+/* Atalho do Início para o painel completo */
+.atalho-painel {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.atalho-painel:hover {
+  border-color: var(--verde-mata);
+}
+
+.atalho-painel__icone {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--verde-mata);
+  color: #fff;
+}
+
+.atalho-painel__texto {
+  display: block;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+/* Estoque: resumo em uma faixa de números */
+.resumo-tecnico {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--papel);
+  overflow: hidden;
+}
+
+.resumo-tecnico > div {
+  padding: 10px 8px;
+  border-left: 1px solid var(--linha);
+}
+
+.resumo-tecnico > div:first-child {
+  border-left: 0;
+}
+
+.resumo-tecnico dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.resumo-tecnico dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+}
+
+.resumo-tecnico__item--destaque {
+  background: var(--verde-claro);
+}
+
+.tabela--compacta tfoot th,
+.tabela--compacta tfoot td {
+  font-weight: 700;
+  border-top: 1px solid var(--linha-campo);
+  border-bottom: 0;
+  background: var(--areia-listra);
+}
+
+.tabela__sub {
+  display: block;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.tabela__data {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-suave);
+}
+
+.tabela--movimentos td {
+  vertical-align: top;
+}
+
+.tipo-movimento {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tipo-movimento--campo {
+  background: var(--areia-escura);
+  color: var(--terra);
+}
+
+.tipo-movimento--entrada {
+  background: var(--verde-claro);
+  color: #24603d;
+}
+
+.tipo-movimento--saida {
+  background: #f6ead7;
+  color: #8a5512;
+}
+
+/* Medidor do ponto de equilíbrio */
+.medidor__manchete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.medidor__manchete strong {
+  font-size: 22px;
+  color: var(--tinta);
+}
+
+.medidor__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f6ead7;
+  color: #8a5512;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.medidor__estado--ok {
+  background: var(--verde-claro);
+  color: #24603d;
+}
+
+.medidor__trilho {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--trilho);
+}
+
+.medidor__parte {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.medidor__marca {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--tinta);
+}
+
+.medidor__escala {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  height: 20px;
+  margin-top: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-suave);
+}
+
+.medidor__escala-marca {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-weight: 700;
+  color: var(--tinta);
+  white-space: nowrap;
+}
+
+.medidor__escala-marca--inicio {
+  transform: none;
+}
+
+.medidor__escala-marca--fim {
+  transform: translateX(-100%);
+}
+
+.medidor__legenda {
+  margin: 8px 0 0;
+}
+
+.medidor__chave-vazia {
+  border: 1px solid var(--linha-campo);
+  background: var(--trilho);
+}
+
+/* PDF do painel: só o painel, com cabeçalho próprio */
+@media print {
+  body.imprimindo-painel * {
+    visibility: hidden;
+  }
+  body.imprimindo-painel .painel-exportavel,
+  body.imprimindo-painel .painel-exportavel * {
+    visibility: visible;
+  }
+  body.imprimindo-painel .painel-exportavel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  body.imprimindo-painel .painel-impressao {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--verde-mata);
+  }
+  body.imprimindo-painel .nao-imprimir,
+  body.imprimindo-painel .grafico-painel__tabela {
+    display: none;
+  }
+  body.imprimindo-painel .painel-cartao,
+  body.imprimindo-painel .painel-indicadores {
+    break-inside: avoid;
+  }
+  body.imprimindo-painel * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* Filtros de dados do painel (agricultora, espécie) e legenda que filtra */
+.painel-filtros-dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.painel-filtro-ativo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--verde-claro);
+  font-size: 14px;
+  color: var(--verde-mata-escuro);
+}
+
+.grafico-painel__filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.grafico-painel__filtro:hover {
+  border-color: var(--verde-mata);
+}
+
+.grafico-painel__legenda-item--oculta .grafico-painel__filtro {
+  color: var(--tinta-suave);
+  text-decoration: line-through;
+}
+
+.grafico-painel__legenda-item--oculta .grafico-painel__chave {
+  background: transparent !important;
+  border: 1px solid var(--linha-campo);
+}
+
+.grafico-painel__filtro--todos {
+  border-style: dashed;
+  color: var(--verde-mata);
+  font-weight: 600;
+}
+
+/* Filtros da tabela de movimentos (estoque) */
+.movimentos-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.movimentos-contagem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.movimentos-filtros .seletor-ano {
+  gap: 6px;
+}
+
+.movimentos-filtros .seletor-ano__opcao {
+  padding: 6px 12px;
+  font-size: 14px;
 }
