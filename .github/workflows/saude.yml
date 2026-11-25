@@ -1,0 +1,29 @@
+# Confere de hora em hora se a API publicada e o banco estão no ar (GET /health).
+# Se falhar, a execução fica vermelha e o GitHub avisa por e-mail quem
+# cuida do repositório. Dá para rodar na mão em Actions → Saúde → Run workflow.
+name: Saúde da API
+
+on:
+  schedule:
+    - cron: '17 * * * *' # todo hora, no minuto 17
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /health (espera até ~2 min, o Render gratuito "acorda" devagar)
+        env:
+          API_URL: ${{ vars.API_URL || 'https://semear-api-37um.onrender.com' }}
+        run: |
+          for tentativa in 1 2 3 4; do
+            resposta=$(curl -s -m 30 "$API_URL/health" || true)
+            echo "Tentativa $tentativa: $resposta"
+            if echo "$resposta" | grep -q '"banco":"ok"'; then
+              echo "API e banco no ar."
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::error::A API ou o banco não responderam em $API_URL/health"
+          exit 1
