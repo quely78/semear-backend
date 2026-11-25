@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { desfazerColheita, registrarColheita } from '../services/plantioService';
 import { diaEMes, deIso } from '../utils/datas';
-import { formatarKg, janelaDeColheita, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
+import { formatarKg, janelaDeColheita, kgEmEstoqueDo, kgVendidosDo, situacaoDoPlantio, SITUACOES } from '../utils/estoque';
 import { formatarData } from '../utils/formatadores';
 import { converterNumero } from '../utils/validacoes';
 import Aviso from './Aviso';
@@ -92,16 +92,27 @@ export default function RegistroColheita({ plantio, hoje, aoAtualizar }) {
           <span className="selo selo--colhido">{SITUACOES.colhido.rotulo}</span>
           <strong className="estoque-plantio__kg">{formatarKg(plantio.quantidadeColhida)}</strong>
         </div>
-        <p className="texto-apoio">Colhido em {formatarData(plantio.dataColheita)}.</p>
+        <p className="texto-apoio">
+          Colhido em {formatarData(plantio.dataColheita)}.
+          {kgVendidosDo(plantio) > 0 &&
+            ` ${formatarKg(kgVendidosDo(plantio))} vendidos · ${formatarKg(kgEmEstoqueDo(plantio))} no estoque.`}
+        </p>
         <Aviso tipo="erro">{erroGeral}</Aviso>
-        <button
-          type="button"
-          className="botao-texto estoque-plantio__desfazer"
-          onClick={aoDesfazer}
-          disabled={salvando}
-        >
-          {salvando ? 'Desfazendo...' : 'Desfazer colheita (registrei por engano)'}
-        </button>
+        {kgVendidosDo(plantio) > 0 ? (
+          // A API não deixa desfazer uma colheita que já tem vendas
+          <p className="texto-apoio">
+            Para desfazer a colheita, apague antes as vendas deste plantio (aba Dinheiro).
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="botao-texto estoque-plantio__desfazer"
+            onClick={aoDesfazer}
+            disabled={salvando}
+          >
+            {salvando ? 'Desfazendo...' : 'Desfazer colheita (registrei por engano)'}
+          </button>
+        )}
       </section>
     );
   }
