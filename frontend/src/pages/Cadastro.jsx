@@ -56,7 +56,9 @@ export default function Cadastro() {
 
   // Carrega a lista de comunidades ao abrir a tela
   useEffect(() => {
-    listarComunidades().then(setComunidades);
+    listarComunidades()
+      .then(setComunidades)
+      .catch(() => setErroGeral('Não foi possível carregar as comunidades. Verifique a internet e abra a tela de novo.'));
   }, []);
 
   // Quem já está logada vai direto para a tela inicial
