@@ -113,6 +113,40 @@ A senha de app só fica no `.env`, que não vai para o GitHub. Se ela vazar, apa
 
 ---
 
+## Qualidade: testes, lint, verificação automática e backup
+
+### Todos os testes
+
+| Onde | Comando | O que cobre |
+|---|---|---|
+| API (raiz) | `npm test` | Plantios, autenticação (cadastro, login, troca de senha, link do e-mail, limite de 5 senhas erradas), perfil, finanças (contas, estoque, edição, permissões) e comunidade/responsável. Precisa do PostgreSQL local (Docker). |
+| Front (`frontend/`) | `npm test` | Contas dos gráficos, do estoque (colheita entra, venda sai) e do dinheiro. Não precisa de banco nem navegador. |
+| Front (`frontend/`) | `npm run lint` | Padrão de código (variável sem uso, regras dos hooks do React, imports). |
+
+Os testes da API criam uma comunidade só para eles, desligam o limite de tentativas e **nunca mandam e-mail de verdade** (o e-mail só aparece no terminal). Tudo o que criam é apagado no final.
+
+### Verificação automática no GitHub
+
+Em cada Pull Request (e em cada envio para a `main`), o GitHub Actions roda sozinho:
+
+- **API:** sobe um PostgreSQL de teste, aplica as migrations e roda `npm test`;
+- **Front:** `npm run lint`, `npm test` e `npm run build`.
+
+Se algo quebrar, o PR mostra um **X vermelho**: corrija antes de fazer o merge. Arquivo: [`.github/workflows/testes.yml`](.github/workflows/testes.yml).
+
+### Monitoramento da API publicada
+
+[`.github/workflows/saude.yml`](.github/workflows/saude.yml) chama `GET /health` de hora em hora. Se a API ou o banco não responderem, a execução fica vermelha em **Actions** e o GitHub avisa por e-mail.
+
+### Backup do banco
+
+- **No computador:** `npm run db:backup` salva o banco do `.env` em `backups/` (compactado). Para o banco do Render: `npm run db:backup -- "<External Database URL>"`. Precisa do Docker aberto. A pasta `backups/` não vai para o GitHub.
+- **Automático (toda segunda):** [`.github/workflows/backup.yml`](.github/workflows/backup.yml). Como o repositório é público, o backup sai **criptografado**. Para ligar, crie em *Settings → Secrets and variables → Actions* os segredos `BANCO_URL` (External Database URL do `semear-db`) e `BACKUP_SENHA` (uma senha forte, guardada em lugar seguro). Sem eles, o backup é pulado. Para abrir: `gpg -d semear-AAAA-MM-DD.sql.gz.gpg | gunzip > backup.sql`.
+
+### Dependências
+
+As versões ficam fixas no `package.json` (nada de `"latest"`), para todo mundo instalar o mesmo. Sobram avisos do `npm audit` só no **Prisma 6** (ferramenta usada no build e nas migrations, não nas requisições das usuárias). A correção exige migrar para o Prisma 7, uma mudança grande que fica para uma tarefa própria.
+
 ## Publicar no Render
 
 O arquivo [`render.yaml`](render.yaml) descreve tudo o que o Render precisa criar, no plano gratuito:
@@ -173,8 +207,8 @@ Endereços: `http://localhost:3000` no computador e `https://semear-api-37um.onr
 | PUT, DELETE | `/plantios/:id` | sim | agricultora | Editar e excluir um plantio dela |
 | PUT, DELETE | `/plantios/:id/colheita` | sim | agricultora | Registrar e desfazer a colheita |
 | GET | `/plantios/:id/financas` | sim | agricultora | Gastos, vendas, lucro, margem e ponto de equilíbrio do plantio |
-| POST, DELETE | `/plantios/:id/gastos` | sim | agricultora | Anotar e apagar gastos |
-| POST, DELETE | `/plantios/:id/vendas` | sim | agricultora | Anotar e apagar vendas (depois da colheita) |
+| POST, PUT, DELETE | `/plantios/:id/gastos` | sim | agricultora | Anotar, editar e apagar gastos |
+| POST, PUT, DELETE | `/plantios/:id/vendas` | sim | agricultora | Anotar, editar e apagar vendas (depois da colheita) |
 | GET | `/financas` | sim | agricultora | Finanças de todos os plantios dela no período |
 | GET | `/coordenadora/agricultoras` | sim | responsável | Agricultoras da comunidade dela |
 | GET | `/coordenadora/plantios` | sim | responsável | Plantios da comunidade (estoque) |
@@ -677,8 +711,10 @@ Regras:
 | GET | `/plantios/:id/financas` | — | `{ plantio, gastos, vendas, resumo }` |
 | POST | `/plantios/:id/gastos` | `{ categoria, valor, data, descricao? }` | `201` + as finanças atualizadas |
 | DELETE | `/plantios/:id/gastos/:gastoId` | — | as finanças atualizadas |
+| PUT | `/plantios/:id/gastos/:gastoId` | `{ categoria, valor, data, descricao? }` | as finanças atualizadas |
 | POST | `/plantios/:id/vendas` | `{ quantidadeKg, precoKg, canal, data }` | `201` + as finanças atualizadas |
 | DELETE | `/plantios/:id/vendas/:vendaId` | — | as finanças atualizadas |
+| PUT | `/plantios/:id/vendas/:vendaId` | `{ quantidadeKg, precoKg, canal, data }` | as finanças atualizadas (os kg desta venda voltam a contar no estoque ao editar) |
 | GET | `/financas?dataInicio=&dataFim=` | — | `{ periodo, total, plantios: [{ id, especie, area, tipoCultivo, dataPlantio, resumo }] }` |
 
 - `categoria`: `SEMENTE`, `ADUBO`, `MAO_DE_OBRA`, `TRANSPORTE` ou `OUTRO`.
